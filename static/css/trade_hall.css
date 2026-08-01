@@ -1,0 +1,39 @@
+/* ============================================================================
+   trade_hall.css —— 策略贴板列表/详情（复用 formula_lib.css 的组件，仅补页面专属）
+   ============================================================================ */
+
+/* 筛选条里的窄数字输入（夏普≥/回撤≤） */
+.filter-num { width: 110px; min-width: 110px; }
+
+/* 价格标签 */
+.price-tag {
+    display: inline-block; padding: 0.15rem 0.55rem; border-radius: 12px;
+    font-weight: 700; font-size: 0.85rem;
+    background: rgba(245, 158, 11, 0.15); color: var(--accent-orange);
+    white-space: nowrap;
+}
+
+.seller-name { color: var(--text-secondary); font-size: 0.85rem; }
+
+/* 公式占位（购买前隐藏内容） */
+.formula-display {
+    padding: 0.75rem; border-radius: var(--radius-sm);
+    background: var(--bg-param-group); border: 1px dashed var(--border-color);
+    font-size: 0.9rem; line-height: 1.5; word-break: break-all;
+}
+.formula-display.muted { color: var(--text-secondary); text-align: center; }
+
+/* 页头「我的挂单/我的成交」按钮组（醒目：阴影 + 彩色图标）*/
+.hall-actions { display: flex; gap: 0.6rem; margin-top: 0.7rem; flex-wrap: wrap; }
+.hall-actions .btn {
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.18);
+    border-width: 1.5px; font-weight: 600;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.hall-actions .btn:hover {
+    box-shadow: 0 5px 16px rgba(59, 130, 246, 0.32);
+    transform: translateY(-1px);
+}
+.hall-actions .btn i { font-size: 1.05rem; margin-right: 1px; }
+.hall-actions .btn .bi-box-seam { color: var(--accent-blue); }     /* 我的挂单：蓝 */
+.hall-actions .btn .bi-receipt { color: var(--accent-green); }     /* 我的成交：绿 */

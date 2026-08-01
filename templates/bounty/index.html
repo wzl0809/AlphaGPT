@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}算力悬赏{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/bounty.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-bullseye"></i> 算力悬赏</h2>
+    <p class="page-sub">共 {{ count }} 个悬赏 · 算力结算 · 余额 <b>{{ '%.2f'|format((balance or 0)|float) }}</b> 算力
+        · <a href="{{ url_for('.my') }}">我的悬赏</a>
+        · <button class="btn btn-primary-custom btn-sm" onclick="openCreate()"><i class="bi bi-plus-lg"></i> 发布悬赏</button></p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="filter-bar" id="filterForm">
+            <div class="filter-input stock-input-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" name="stock" value="{{ stock }}" placeholder="代码"
+                       class="form-control stock-input" autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary-custom"><i class="bi bi-funnel"></i> 筛选</button>
+        </form>
+
+        {% if items %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>发布者</th>
+                        <th>达标夏普≥</th>
+                        <th>赏金</th>
+                        <th>接单数</th>
+                        <th>状态</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in items %}
+                    <tr>
+                        <td>
+                            <div class="stock-cell">
+                                <span class="stock-code">{{ b.stock_code }}</span>
+                            </div>
+                        </td>
+                        <td><span class="seller-name">{{ (b.poster or {}).username or '—' }}</span></td>
+                        <td>{{ ((b.requirement or {}).min_sharpe) if (b.requirement or {}).min_sharpe is not none else '—' }}</td>
+                        <td><span class="price-tag">{{ b.reward_nexus }} 算力</span></td>
+                        <td>{{ b.bids_count if b.bids_count is not none else 0 }}</td>
+                        <td><span class="src-badge src-{{ 'bought' if b.status == 'open' else 'self' }}">{{ b.status }}</span></td>
+                        <td class="col-actions">
+                            <a href="{{ url_for('.detail', id=b.id) }}" class="icon-btn" title="查看/接单"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pages > 1 %}
+        <nav class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('.index', page=page-1, stock=stock) }}" class="page-btn">« 上一页</a>
+            {% endif %}
+            <span class="page-info">第 {{ page }} / {{ pages }} 页</span>
+            {% if page < pages %}
+                <a href="{{ url_for('.index', page=page+1, stock=stock) }}" class="page-btn">下一页 »</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>暂无悬赏</p>
+            <span>点击上方「发布悬赏」发布一个代跑需求</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── 发单弹窗 ── #}
+<div class="modal-mask" id="createModal">
+    <div class="modal-card">
+        <form method="post" action="{{ url_for('.create') }}" id="createForm">
+            <div class="modal-head"><i class="bi bi-bullseye"></i> 发布悬赏（扣押赏金）</div>
+            <div class="modal-body">
+                <label class="form-label">标的代码</label>
+                <div class="filter-input stock-input-wrap" style="margin-bottom:.5rem;">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="stock_code" id="createStock" class="form-control stock-input"
+                           placeholder="代码" autocomplete="off" required>
+                    <input type="hidden" name="stock_name" id="createStockName">
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label">达标夏普 ≥</label>
+                        <input type="number" name="min_sharpe" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <div>
+                        <label class="form-label">赏金（算力）</label>
+                        <input type="number" name="reward_nexus" class="form-control" step="1" min="1" required>
+                    </div>
+                </div>
+                <p class="form-text mt-2">算力门槛（可选，服务端硬校验；留空则不限）</p>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label">GPU 显存 ≥ (GB)</label>
+                        <input type="number" name="min_gpu_vram" class="form-control" step="1" min="0">
+                    </div>
+                    <div>
+                        <label class="form-label">CPU 核数 ≥</label>
+                        <input type="number" name="min_cpu_cores" class="form-control" step="1" min="0">
+                    </div>
+                </div>
+                <label class="form-label mt-2">截止时间（可选）</label>
+                <input type="datetime-local" name="deadline" class="form-control">
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-outline-custom" onclick="closeCreate()">取消</button>
+                <button type="submit" class="btn btn-primary-custom"><i class="bi bi-check2"></i> 确认发布（扣押赏金）</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openCreate() { document.getElementById('createModal').classList.add('show'); }
+    function closeCreate() { document.getElementById('createModal').classList.remove('show'); }
+    // 股票选中后回填名称
+    document.getElementById('createStock')?.addEventListener('stockselect', (e) => {
+        document.getElementById('createStockName').value = e.detail?.name || '';
+    });
+</script>
+<script src="{{ url_for('static', filename='js/formula_lib.js') }}"></script>
+{% endblock %}

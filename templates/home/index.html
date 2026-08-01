@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/home.css') }}" rel="stylesheet">
+<style>
+    .tv-news { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+    .tv-news li { padding: 0.35rem 0; border-bottom: 1px dashed var(--border-color); font-size: 0.82rem; line-height: 1.4; }
+    .tv-news li:last-child { border-bottom: none; }
+    .tv-news a { color: var(--text-primary); }
+    .tv-news a:hover { color: var(--accent-blue); }
+    .sent-bar .news-date { float: right; font-size: 0.72rem; color: var(--text-secondary); }
+    .gauge-warn { margin-top: 0.6rem; padding: 0.5rem 0.7rem; border-radius: var(--radius-sm, 6px);
+        background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.45);
+        color: #f0ad4e; font-size: 0.78rem; line-height: 1.45; }
+    .gauge-warn i { margin-right: 0.25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+{# ── 顶部：系统通知（左）+ 个人信息卡（右）── #}
+<div class="home-top-row">
+    <div class="card">
+        <div class="card-header"><i class="bi bi-megaphone"></i> 系统通知</div>
+        <div class="card-body announce-body">
+            {% if announcements %}
+            {% for a in announcements %}
+            <div class="announce-banner ann-{{ a.category or 'normal' }}">
+                <i class="bi bi-{{ {'urgent':'exclamation-triangle','important':'star','normal':'info-circle'}.get(a.category, 'info-circle') }}"></i>
+                <div><div class="ann-title">{{ a.title }}</div><div class="ann-body">{{ a.content[:160] }}</div></div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="announce-banner ann-welcome">
+                <i class="bi bi-robot"></i>
+                <div><div class="ann-title">欢迎使用 {{ app_name }}</div>
+                <div class="ann-body">{{ profile.username }}，前往「训练系统」开始挖掘公式，或配置 deepseek/tavily Key 开启大盘 AI 分析。</div></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card profile-card">
+        <div class="card-body">
+            <div class="profile-head">
+                <div class="avatar"><i class="bi bi-person-circle"></i></div>
+                <div>
+                    <div class="profile-name">{{ profile.username }}
+                        {% if profile.is_mock %}<span class="badge-mock">DEV</span>{% endif %}
+                    </div>
+                    <div class="profile-email">{{ profile.email }}</div>
+                </div>
+            </div>
+            <div class="lv-row">
+                <span class="lv-badge lv-{{ profile.level }}">Lv.{{ profile.level }}</span>
+                <span class="lv-title">{{ profile.level|level_title }}</span>
+            </div>
+            <div class="lv-progress"><div class="lv-progress-bar" style="width:{{ ((profile.level or 1) * 16) }}%"></div></div>
+            <div class="kv-list">
+                <div><span class="kv-k">算力</span><span class="kv-v coin">{{ '%.0f'|format((profile.nexus_coin_balance or 0)|float) }}</span></div>
+                <div><span class="kv-k">版本</span><span class="kv-v">v{{ client_version }}</span></div>
+                <div><span class="kv-k">用户ID</span><span class="kv-v">{{ profile.id }}</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 新手引导（已登录，注册步略）── #}
+<div class="card guide-card">
+    <div class="card-header">
+        <i class="bi bi-rocket-takeoff"></i> 新手引导 · 四步生成你的第一个量化信号
+        <span class="guide-hint">跟着点完即可，全程研究参考</span>
+    </div>
+    <div class="card-body">
+        <div class="guide-steps">
+            <a class="guide-step" href="{{ url_for('settings.index') }}#ai">
+                <div class="guide-ico ico-blue"><i class="bi bi-key"></i></div>
+                <div class="guide-num">第 1 步</div>
+                <div class="guide-title">配置 AI Key</div>
+                <p class="guide-tip">系统设置里填 DeepSeek API 或 OpenAI 兼容 API（开通 AI 研究仪表盘），可选填 Tavily（开通新闻）</p>
+                <span class="guide-go">前往配置 →</span>
+            </a>
+            <a class="guide-step" href="{{ url_for('train.index') }}">
+                <div class="guide-ico ico-green"><i class="bi bi-cpu"></i></div>
+                <div class="guide-num">第 2 步</div>
+                <div class="guide-title">训练一个公式</div>
+                <p class="guide-tip">训练系统选一个熟悉的标的，默认参数点「开始训练」，耐心等待训练完成得到最优公式</p>
+                <span class="guide-go">去训练 →</span>
+            </a>
+            <a class="guide-step" href="{{ url_for('formula_lib.index') }}">
+                <div class="guide-ico ico-purple"><i class="bi bi-bookmark-star"></i></div>
+                <div class="guide-num">第 3 步</div>
+                <div class="guide-title">加入量化信号</div>
+                <p class="guide-tip">在公式库里找到公式，点「加入量化信号」挂到跟踪列表</p>
+                <span class="guide-go">打开公式库 →</span>
+            </a>
+            <a class="guide-step" href="{{ url_for('quant.index') }}">
+                <div class="guide-ico ico-orange"><i class="bi bi-broadcast"></i></div>
+                <div class="guide-num">第 4 步</div>
+                <div class="guide-title">生成信号</div>
+                <p class="guide-tip">量化信号页点「生成信号」，查看因子数值、信号强度弧与 AI 客观技术面分析</p>
+                <span class="guide-go">查看信号 →</span>
+            </a>
+        </div>
+        <div class="guide-foot">
+            <i class="bi bi-shield-check"></i>
+            <span>所有输出仅供研究学习，<b>不构成投资建议</b>。{% if feature_flags.markets_enabled %}不想自己训练？可直接去 <a href="{{ url_for('trade_hall.index') }}">策略贴板</a> 参考他人分享的公式，或{% endif %}查看 <a href="{{ url_for('help.index') }}">完整帮助手册</a>。</span>
+        </div>
+    </div>
+</div>
+
+{# ── 大盘区：情绪（左）+ 评述/新闻（右），刷新数据按钮在各卡 header 右上 ── #}
+<div class="home-grid">
+    <div id="marketCards" style="display:contents">
+        {% include 'home/_market.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}

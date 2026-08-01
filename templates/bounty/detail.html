@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}悬赏详情 · {{ b.stock_code }}{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/train.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/bounty.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-bullseye"></i> 悬赏详情</h2>
+    <p class="page-sub">
+        <span class="stock-code">{{ b.stock_code }}</span>
+        · 发布者 <b>{{ (b.poster or {}).username or '—' }}</b>
+        · 状态 <span class="src-badge src-{{ 'bought' if b.status == 'open' else 'self' }}">{{ b.status }}</span>
+    </p>
+</div>
+
+<div class="metric-grid">
+    <div class="metric-card"><div class="metric-value up">{{ b.reward_nexus }}</div><div class="metric-label">赏金（算力）</div></div>
+    <div class="metric-card"><div class="metric-value {{ ((b.requirement or {}).min_sharpe or 0)|sharpe_color }}">{{ (b.requirement or {}).min_sharpe if (b.requirement or {}).min_sharpe is not none else '—' }}</div><div class="metric-label">达标夏普 ≥</div></div>
+    <div class="metric-card"><div class="metric-value neutral">{{ b.bids_count if b.bids_count is not none else (bids|length) }}</div><div class="metric-label">接单数</div></div>
+    <div class="metric-card"><div class="metric-value neutral">{{ (b.deadline or '')[:10] if b.deadline else '不限' }}</div><div class="metric-label">截止日期</div></div>
+</div>
+
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list-check"></i> 算力门槛（服务端硬校验）</div>
+        <div class="card-body">
+            <div class="kv-grid">
+                <div><span class="kv-k">GPU 显存 ≥</span><span class="kv-v">{{ b.min_gpu_vram or '不限' }} GB</span></div>
+                <div><span class="kv-k">CPU 核数 ≥</span><span class="kv-v">{{ b.min_cpu_cores or '不限' }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="bi bi-bar-chart"></i> 接单排行（按夏普）</div>
+        <div class="card-body">
+            {% if bids %}
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead><tr><th>接单者</th><th>夏普</th><th>状态</th>{% if is_poster and b.status == 'open' %}<th class="col-actions">操作</th>{% endif %}</tr></thead>
+                    <tbody>
+                        {% for bd in bids %}
+                        <tr>
+                            <td>{{ (bd.bidder or {}).username or '—' }}</td>
+                            <td><span class="metric-value {{ (bd.test_sharpe or 0)|sharpe_color }}">{{ '%.3f'|format((bd.test_sharpe or 0)|float) }}</span></td>
+                            <td><span class="src-badge src-{{ 'relay' if bd.status == 'won' else ('self' if bd.status == 'lost' else 'bought') }}">{{ bd.status }}</span></td>
+                            {% if is_poster and b.status == 'open' %}
+                            <td class="col-actions">
+                                <form method="post" action="{{ url_for('.award', id=b.id) }}" class="inline-form">
+                                    <input type="hidden" name="bid_id" value="{{ bd.id }}">
+                                    <button class="btn btn-primary-custom btn-sm" onclick="return confirm('确认中标此接单？赏金将发放且不可撤销。')"><i class="bi bi-trophy"></i> 中标</button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state small"><i class="bi bi-inbox"></i><span>暂无接单</span></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-actions">
+    {% if is_poster %}
+        {% if b.status == 'open' %}
+        <form method="post" action="{{ url_for('.cancel', id=b.id) }}" class="inline-form">
+            <button class="btn btn-danger-custom" onclick="return confirm('确认取消悬赏？将退还扣押的赏金。')"><i class="bi bi-x-circle"></i> 取消并退款</button>
+        </form>
+        {% else %}
+        <span class="form-text">该悬赏已结束（{{ b.status }}）</span>
+        {% endif %}
+    {% else %}
+        {% if b.status == 'open' %}
+            {% if my_bid %}
+            <span class="form-text">你已接单（{{ my_bid.status }}），等待悬赏者中标结果</span>
+            {% else %}
+            <form method="post" action="{{ url_for('.bid', id=b.id) }}" class="inline-form bid-form">
+                <label>选择接单公式</label>
+                <select name="formula_id" class="form-select" required>
+                    <option value="">— 选择本地公式 —</option>
+                    {% for f in my_formulas %}
+                    <option value="{{ f.id }}">{{ f.stock_code }} · {{ f.ai_name or '未命名' }}（夏普 {{ '%.2f'|format((f.test_sharpe or 0)|float) }} · {{ f.source|source_label }}）</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary-custom"><i class="bi bi-send"></i> 接单</button>
+            </form>
+            {% if not my_formulas %}<span class="form-text">（没有可接单的公式：仅「自己训练/交易购买」来源可参与悬赏）</span>{% endif %}
+            {% endif %}
+        {% else %}
+        <span class="form-text">该悬赏已结束（{{ b.status }}）</span>
+        {% endif %}
+    {% endif %}
+    <a href="{{ url_for('.my') }}" class="btn btn-outline-custom"><i class="bi bi-box-seam"></i> 我的悬赏</a>
+    <a href="{{ url_for('.index') }}" class="btn btn-outline-custom"><i class="bi bi-arrow-left"></i> 返回悬赏列表</a>
+</div>
+{% endblock %}

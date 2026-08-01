@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}策略贴板{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/train.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/trade_hall.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-shop"></i> 策略贴板</h2>
+    <p class="page-sub">共 {{ count }} 个在售公式 · 算力定价 · 分账：平台 50% / 作者 50%
+        · 余额 <b>{{ '%.2f'|format((balance or 0)|float) }}</b> 算力</p>
+    <div class="hall-actions">
+        <a href="{{ url_for('.my') }}" class="btn btn-outline-custom btn-sm"><i class="bi bi-box-seam"></i> 我的分享</a>
+        <a href="{{ url_for('.orders') }}" class="btn btn-outline-custom btn-sm"><i class="bi bi-receipt"></i> 分享成功</a>
+    </div>
+</div>
+{# 营销位（会员体系已下线） #}
+
+<div class="card">
+    <div class="card-body">
+        {# ── 筛选条 ── #}
+        <form method="get" class="filter-bar" id="filterForm">
+            <div class="filter-input stock-input-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" name="stock" value="{{ stock }}" placeholder="代码"
+                       class="form-control stock-input" autocomplete="off">
+            </div>
+            <input type="number" name="sharpe_gt" value="{{ sharpe_gt }}" placeholder="夏普≥"
+                   class="form-control filter-num" step="0.01" min="0">
+            <input type="number" name="dd_lt" value="{{ dd_lt }}" placeholder="回撤≤"
+                   class="form-control filter-num" step="0.01" min="0">
+            <select name="order" class="form-select filter-select" id="orderSelect">
+                {% for val, lbl in order_options %}
+                <option value="{{ val }}" {{ 'selected' if order == val else '' }}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary-custom"><i class="bi bi-funnel"></i> 筛选</button>
+        </form>
+
+        {# ── 列表 ── #}
+        {% if items %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>所属用户</th>
+                        <th>夏普</th>
+                        <th>最大回撤</th>
+                        <th>年化</th>
+                        <th>算力</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in items %}
+                    <tr>
+                        <td>
+                            <div class="stock-cell">
+                                <span class="stock-code">{{ l.stock_code }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="seller-name">{{ (l.seller or {}).username or '—' }}</span>
+                        </td>
+                        <td><span class="metric-value {{ l.test_sharpe|sharpe_color }}">{{ '%.3f'|format((l.test_sharpe or 0)|float) }}</span></td>
+                        <td><span class="metric-value down">{{ l.max_dd|pct if l.max_dd is not none else '--' }}</span></td>
+                        <td><span class="metric-value {{ 'up' if (l.ann_ret or 0) > 0 else 'down' }}">{{ l.ann_ret|pct if l.ann_ret is not none else '--' }}</span></td>
+                        <td><span class="price-tag">{{ l.price_nexus }} 算力</span></td>
+                        <td class="col-actions">
+                            <a href="{{ url_for('.detail', lid=l.id) }}" class="icon-btn" title="查看/收集"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── 分页 ── #}
+        {% if pages > 1 %}
+        <nav class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('.index', page=page-1, stock=stock, sharpe_gt=sharpe_gt, dd_lt=dd_lt, order=order) }}" class="page-btn">« 上一页</a>
+            {% endif %}
+            <span class="page-info">第 {{ page }} / {{ pages }} 页</span>
+            {% if page < pages %}
+                <a href="{{ url_for('.index', page=page+1, stock=stock, sharpe_gt=sharpe_gt, dd_lt=dd_lt, order=order) }}" class="page-btn">下一页 »</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>暂无在售公式</p>
+            <span>可在「公式库」出售自己的公式，或稍后再来看看</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('orderSelect')?.addEventListener('change', () => document.getElementById('filterForm').submit());
+</script>
+<script src="{{ url_for('static', filename='js/formula_lib.js') }}"></script>
+{% endblock %}

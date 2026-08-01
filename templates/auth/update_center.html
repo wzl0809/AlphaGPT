@@ -1,0 +1,199 @@
+{% extends "auth_base.html" %}
+{% block title %}更新客户端{% endblock %}
+
+{% block extra_head %}
+<style>
+  body.auth-page { justify-content: flex-start; padding-top: clamp(1.5rem, 6vh, 4rem); }
+  body.auth-page .auth-wrap { max-width: 680px; }
+  .uc-card { width: 100%; }
+  .uc-hero { padding: 1.1rem 1.2rem; border-radius: 12px; margin-bottom: 1rem; }
+  .uc-hero.must { background: rgba(220,53,69,0.10); border: 1px solid rgba(220,53,69,0.45); }
+  .uc-hero.suggest { background: rgba(10,132,255,0.10); border: 1px solid rgba(10,132,255,0.40); }
+  .uc-hero h3 { margin: 0 0 .4rem; font-size: 1.05rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .uc-hero p { margin: 0; font-size: .85rem; line-height: 1.55; color: var(--text-secondary); }
+  .uc-versions { display:flex; gap: 1.5rem; margin: .9rem 0 0; font-size: .8rem; color: var(--text-secondary); flex-wrap:wrap; }
+  .uc-versions b { font-size: 1.0rem; color: var(--text-primary); margin-left:.35rem; }
+  .uc-section { margin: 1.1rem 0; }
+  .uc-section > h4 { font-size: .9rem; margin: 0 0 .55rem; color: var(--text-primary); display:flex; align-items:center; gap:.4rem; }
+  .asset-row { display:flex; align-items:center; gap:.6rem; padding:.6rem .7rem; border:1px solid var(--border-color); border-radius:8px; margin-bottom:.5rem; flex-wrap:wrap; }
+  .asset-row.primary { border-color: rgba(10,132,255,0.5); background: rgba(10,132,255,0.05); }
+  .asset-main { flex: 1 1 220px; min-width: 0; }
+  .asset-label { font-weight:600; font-size:.88rem; }
+  .asset-meta { font-size:.74rem; color: var(--text-secondary); margin-top:.15rem; }
+  .asset-meta code, .asset-code code { background: var(--bg-glass, rgba(255,255,255,.08)); padding:.05rem .35rem; border-radius:4px; font-size:.72rem; }
+  .asset-code { font-size:.78rem; margin-top:.15rem; color: var(--text-secondary); }
+  .btn-dl { background: var(--accent-blue,#0a84ff); color:#fff !important; padding:.45rem .85rem; border-radius:7px; text-decoration:none; font-size:.82rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.3rem; }
+  .btn-dl:hover { opacity:.9; }
+  .btn-copy { background: transparent; border:1px solid var(--border-color); color: var(--text-secondary); padding:.28rem .5rem; border-radius:6px; font-size:.74rem; cursor:pointer; }
+  .btn-copy:hover { color: var(--text-primary); }
+  .uc-steps { font-size:.8rem; line-height:1.6; color: var(--text-secondary); padding-left: 1.3rem; margin:0; }
+  .uc-steps li { margin-bottom:.35rem; }
+  .uc-notes { font-size:.8rem; line-height:1.6; white-space: pre-line; background: var(--bg-glass, rgba(255,255,255,.05)); padding:.7rem .8rem; border-radius:8px; max-height: 180px; overflow:auto; color: var(--text-secondary); }
+  .uc-actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1.3rem; align-items:center; }
+  .uc-actions .btn { font-size:.85rem; }
+  .uc-link { font-size:.82rem; color: var(--text-secondary); text-decoration:none; padding:.4rem .6rem; border:1px solid var(--border-color); border-radius:7px; }
+  .uc-link:hover { color: var(--text-primary); }
+  .uc-fallback { font-size:.76rem; color: var(--text-secondary); margin-top:.6rem; line-height:1.5; word-break: break-all; }
+  .uc-fallback code { background: var(--bg-glass, rgba(255,255,255,.08)); padding:.05rem .35rem; border-radius:4px; }
+  .uc-toast { position:fixed; bottom:1.2rem; left:50%; transform:translateX(-50%); background: rgba(40,40,40,.92); color:#fff; padding:.5rem .9rem; border-radius:8px; font-size:.8rem; opacity:0; transition:opacity .25s; pointer-events:none; z-index:60; }
+  .uc-toast.show { opacity:1; }
+  .uc-badge { font-size:.68rem; padding:.08rem .45rem; border-radius:99px; font-weight:600; }
+  .uc-badge.must { background: rgba(220,53,69,.18); color:#dc3545; }
+  .uc-badge.new { background: rgba(10,132,255,.18); color:#0a84ff; }
+  kbd { background: var(--bg-glass, rgba(255,255,255,.08)); padding:.05rem .35rem; border-radius:4px; font-size:.74rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card uc-card">
+    <div class="auth-head"><h3><i class="bi bi-cloud-arrow-down"></i> 更新客户端</h3></div>
+
+    {% set is_must = mandatory or (payload is mapping and payload.upgrade_required) %}
+    {% set latest = (payload.latest_version if payload is mapping else '') or '' %}
+    {% set passets = (payload.assets if payload is mapping else []) or [] %}
+
+    {# ── hero ── #}
+    <div class="uc-hero {{ 'must' if is_must else 'suggest' }}">
+      <h3>
+        {% if is_must %}<i class="bi bi-exclamation-triangle-fill" style="color:#dc3545"></i> 需要更新到最新版才能登录
+        {% else %}<i class="bi bi-stars" style="color:#0a84ff"></i> 发现新版本{% endif %}
+        <span class="uc-badge {{ 'must' if is_must else 'new' }}">{{ '必须升级' if is_must else '建议升级' }}</span>
+      </h3>
+      <p>
+        {% if is_must %}
+          你当前的版本已不再受支持。为保障账户安全与数据准确，请先更新到最新版{% if latest %} <b>v{{ latest }}</b>{% endif %}，再用同一账号登录。
+          你的<strong>账号、算力、自建公式与训练记录都不会丢失</strong>，无需重新注册。
+        {% else %}
+          有更新的版本可用{% if latest %}（v{{ latest }}）{% endif %}。建议更新以获得更稳、更快的体验；暂不更新也可继续登录。
+        {% endif %}
+      </p>
+      <div class="uc-versions">
+        <div>当前版本<b>v{{ client_version }}</b></div>
+        {% if latest %}<div>最新版本<b style="color:#0a84ff">v{{ latest }}</b></div>{% endif %}
+      </div>
+    </div>
+
+    {# ── 下载渠道 ── #}
+    <div class="uc-section">
+      <h4><i class="bi bi-download"></i> 下载地址（任选其一）</h4>
+      {% if passets %}
+        {% for a in passets %}
+        <div class="asset-row {{ 'primary' if a.is_primary else '' }}"
+             data-url="{{ a.url }}" data-code="{{ a.code }}" data-sha="{{ a.sha256 }}">
+          <div class="asset-main">
+            <div class="asset-label">{{ a.label }}{% if a.is_primary %} <span class="uc-badge new" style="margin-left:.3rem">推荐</span>{% endif %}</div>
+            <div class="asset-meta">
+              {% if a.size_bytes %}{{ (a.size_bytes/1048576)|round(1) }} MB{% if a.sha256 or a.code %} · {% endif %}{% endif %}
+              {% if a.sha256 %}SHA256 <code>{{ a.sha256[:12] }}…</code>{% endif %}
+            </div>
+            {% if a.code %}<div class="asset-code">提取码 <code>{{ a.code }}</code></div>{% endif %}
+          </div>
+          <a class="btn-dl" href="{{ a.url }}" target="_blank" rel="nofollow noopener noreferrer">
+            <i class="bi bi-box-arrow-down"></i> 下载
+          </a>
+          {% if a.sha256 or a.code %}<button class="btn-copy" onclick="ucCopyAttr(this)">复制</button>{% endif %}
+          <button class="btn-copy" onclick="ucCopyAttr(this,'url')" title="复制直链">复制地址</button>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="uc-fallback">暂未获取到下载地址。请点下方"重新检测"，或访问官网下载最新版本。</div>
+      {% endif %}
+
+      {# ── 兜底地址（所有渠道失效时）── #}
+      {% set fallback = (payload.download_fallback if payload is mapping else '') or download_fallback_url %}
+      {% if fallback %}
+      <div class="uc-fallback" data-url="{{ fallback }}">
+        <i class="bi bi-link-45deg"></i> 所有地址都打不开？复制官方兜底地址到浏览器打开：
+        <code>{{ fallback }}</code>
+        <button class="btn-copy" onclick="ucCopyAttr(this,'url')">复制</button>
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── 安装引导 ── #}
+    <div class="uc-section">
+      <h4><i class="bi bi-list-check"></i> 更新步骤</h4>
+      <ol class="uc-steps">
+        <li>点击上方任一渠道下载新版安装包。</li>
+        <li>在系统托盘的 AlphaGPT 图标上<strong>右键 → 退出</strong>，完全关闭当前客户端（直接点窗口 × 可能仍在后台运行）。</li>
+        <li>解压新版压缩包，覆盖旧目录（或解压到新目录后改快捷方式）。</li>
+        <li>启动新版，用<strong>原账号</strong>登录即可——公式、训练记录、算力都在。</li>
+      </ol>
+      <div class="uc-fallback">看不到托盘图标？按 <kbd>Ctrl+Shift+Esc</kbd> 打开任务管理器，结束 AlphaGPT / pythonw 进程后再安装。</div>
+    </div>
+
+    {# ── 更新日志 ── #}
+    {% if payload is mapping and payload.notes %}
+    <div class="uc-section">
+      <h4><i class="bi bi-card-text"></i> 更新日志</h4>
+      <div class="uc-notes">{{ payload.notes }}</div>
+    </div>
+    {% endif %}
+
+    {# ── 操作 ── #}
+    <div class="uc-actions">
+      <button class="btn btn-primary-custom" id="ucRecheck"><i class="bi bi-arrow-repeat"></i> 我已安装新版，重新检测</button>
+      {% if not is_must %}<a class="uc-link" href="{{ url_for('auth.login') }}">返回登录</a>{% endif %}
+    </div>
+  </div>
+</div>
+<div class="uc-toast" id="ucToast"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var toastEl = document.getElementById('ucToast');
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(function () { toastEl.classList.remove('show'); }, 1800);
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function(){ toast('已复制'); }, fb);
+    }
+    fb();
+    function fb() {
+      var t = document.createElement('textarea');
+      t.value = text; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); toast('已复制'); } catch (e) { toast('复制失败，请手动选择'); }
+      document.body.removeChild(t);
+    }
+  }
+  // 从最近 .asset-row / .uc-fallback 的 data-* 读值（避免把 URL/提取码拼进 JS 字符串，防引号注入）
+  window.ucCopyAttr = function (btn, key) {
+    var row = btn.closest('.asset-row, .uc-fallback');
+    if (!row) { toast('复制失败'); return; }
+    if (key === 'url') { copyText(row.getAttribute('data-url') || ''); return; }
+    if (key === 'sha') { copyText(row.getAttribute('data-sha') || ''); return; }
+    // 默认：优先提取码，无则 sha
+    var code = row.getAttribute('data-code');
+    copyText(code ? code : (row.getAttribute('data-sha') || ''));
+  };
+
+  var btn = document.getElementById('ucRecheck');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var orig = btn.innerHTML;
+      btn.disabled = true; btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> 检测中…';
+      fetch('{{ url_for("auth.release_info_proxy") }}', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          btn.disabled = false; btn.innerHTML = orig;
+          if (d && d.code) {
+            toast('检测失败，请检查网络后重试');
+          } else if (d && d.upgrade_required === false) {
+            toast('版本检测通过，可以登录了');
+            setTimeout(function () { window.location.href = '{{ url_for("auth.login") }}'; }, 700);
+          } else {
+            toast('仍是旧版本，请确认已安装新版并完全重启客户端');
+          }
+        })
+        .catch(function () { btn.disabled = false; btn.innerHTML = orig; toast('检测失败，请检查网络后重试'); });
+    });
+  }
+})();
+</script>
+{% endblock %}

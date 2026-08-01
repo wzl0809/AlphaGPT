@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}reports 清理{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/settings.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-file-earmark-text"></i> reports 训练日志清理</h2>
+    <p class="page-sub">共 {{ items.total }} 个文件 · 全选/多选/单选删除</p>
+</div>
+
+<form method="post" action="{{ url_for('.delete_reports') }}">
+    <div class="card">
+        <div class="card-body">
+            {% if items.items %}
+            <div class="clean-toolbar">
+                <label class="form-check-label"><input type="checkbox" id="selectAll"> 全选</label>
+                <button type="submit" class="btn btn-danger-custom" onclick="return confirm('确认删除所选文件？')"><i class="bi bi-trash"></i> 删除所选</button>
+                <a href="{{ url_for('.index') }}" class="btn btn-outline-custom"><i class="bi bi-arrow-left"></i> 返回</a>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead><tr><th></th><th>文件名</th><th>类型</th><th>代码</th><th>大小</th><th>时间</th></tr></thead>
+                    <tbody>
+                        {% for r in items.items %}
+                        <tr>
+                            <td><input type="checkbox" name="file_ids" value="{{ r.filepath }}" class="row-chk"></td>
+                            <td class="file-name" title="{{ r.filepath }}">{{ r.filepath | replace('\\','/') | replace('reports/','') }}</td>
+                            <td><span class="kind-badge kind-{{ r.kind }}">{{ r.kind }}</span></td>
+                            <td>{{ r.stock_code or '—' }}</td>
+                            <td>{{ '%.1f'|format(r.size_bytes/1024) }} KB</td>
+                            <td>{{ r.created_at|fmt_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if items.pages > 1 %}
+            <nav class="pagination">
+                {% if items.has_prev %}<a href="{{ url_for('.reports_cleanup', page=items.prev_num) }}" class="page-btn">« 上一页</a>{% endif %}
+                <span class="page-info">第 {{ items.page }} / {{ items.pages }} 页</span>
+                {% if items.has_next %}<a href="{{ url_for('.reports_cleanup', page=items.next_num) }}" class="page-btn">下一页 »</a>{% endif %}
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="empty-state"><i class="bi bi-inbox"></i><p>reports 目录为空</p></div>
+            <a href="{{ url_for('.index') }}" class="btn btn-outline-custom"><i class="bi bi-arrow-left"></i> 返回</a>
+            {% endif %}
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('selectAll')?.addEventListener('change', e =>
+        document.querySelectorAll('.row-chk').forEach(c => c.checked = e.target.checked));
+</script>
+{% endblock %}

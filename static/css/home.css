@@ -1,0 +1,137 @@
+/* ============================================================================
+   home.css —— 首页仪表盘
+   ============================================================================ */
+
+/* 瀑布流：桌面/平板 2 列，竖屏手机(≤560px)转 1 列；直接子元素(各列分组) break-inside 保证整组不被列劈开 */
+.home-grid { column-count: 2; column-gap: 1.25rem; }
+.home-grid > div, #marketCards > div { break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid; }
+@media (max-width: 560px) { .home-grid { column-count: 1; } }
+
+/* 公告横幅 */
+.announce-stack { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+.announce-banner {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    padding: 0.85rem 1.1rem; border-radius: var(--radius-md);
+    border: 1px solid var(--border-color); border-left-width: 4px;
+    background: var(--bg-glass); backdrop-filter: blur(var(--blur-strength));
+    box-shadow: var(--shadow);
+}
+.announce-banner > i { font-size: 1.3rem; margin-top: 2px; }
+.ann-title { font-weight: 700; font-size: 0.95rem; }
+.ann-body { font-size: 0.84rem; color: var(--text-secondary); margin-top: 2px; }
+.ann-normal { border-left-color: var(--accent-blue); }
+.ann-normal > i { color: var(--accent-blue); }
+.ann-urgent { border-left-color: var(--accent-red); }
+.ann-urgent > i { color: var(--accent-red); }
+.ann-important { border-left-color: var(--accent-orange); }
+.ann-important > i { color: var(--accent-orange); }
+.ann-welcome { border-left-color: var(--accent-purple); background: linear-gradient(135deg, var(--bg-glass), rgba(139,92,246,0.06)); }
+.ann-welcome > i { color: var(--accent-purple); }
+
+/* 个人信息卡 */
+.profile-card .card-body { padding: 1.25rem; }
+.profile-head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; }
+.avatar { font-size: 2.6rem; color: var(--accent-blue); line-height: 1; }
+.profile-name { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+.profile-email { font-size: 0.8rem; color: var(--text-secondary); }
+.badge-mock { background: var(--accent-orange); color: #fff; font-size: 0.62rem; padding: 1px 6px; border-radius: 4px; font-weight: 700; }
+
+.lv-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.lv-badge {
+    padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.74rem; font-weight: 700; color: #fff;
+}
+.lv-1 { background: #94a3b8; } .lv-2 { background: #8b5cf6; } .lv-3 { background: #3b82f6; }
+.lv-4 { background: #06b6d4; } .lv-5 { background: #f59e0b; } .lv-6 { background: linear-gradient(135deg,#f59e0b,#ef4444); }
+.lv-title { font-size: 0.85rem; color: var(--text-secondary); }
+.lv-progress { height: 6px; background: var(--bg-param-group); border-radius: 3px; overflow: hidden; margin-bottom: 0.85rem; }
+.lv-progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-green)); transition: width 0.6s; }
+
+.kv-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.kv-list .kv-k { display: block; font-size: 0.72rem; color: var(--text-secondary); }
+.kv-list .kv-v { font-weight: 600; font-size: 0.9rem; }
+.kv-list .coin { color: var(--accent-orange); }
+
+/* 仪表盘 */
+.gauge-body { text-align: center; padding: 0.5rem 1rem 0.25rem; }
+.gauge-svg { width: 100%; max-width: 280px; height: auto; }
+.gauge-label { font-size: 1.4rem; font-weight: 800; margin-top: -0.3rem; }
+.gauge-label:empty:before { content: '—'; }
+/* 仪表盘下部数据表（涨跌家数/涨停跌停/成交额/指数/板块）整体居中 */
+.gauge-table { width: 100%; max-width: 320px; margin: 0.6rem auto 0; }
+.gauge-table td { text-align: center; }
+/* A 股配色（仅大盘情绪卡局部，红涨绿跌）：涨/看多=红、跌/看空=绿、高活跃=蓝。
+   与全站 metric-value 的西式「绿涨红跌」相反，故只用在大盘行情展示。 */
+.gauge-tag { color: var(--text-secondary); font-weight: 600; }
+.gauge-tag.tag-up { color: var(--accent-red); }
+.gauge-tag.tag-down { color: var(--accent-green); }
+.gauge-tag.tag-active { color: var(--accent-blue); }
+
+/* AI 文本 */
+.ai-text { font-size: 0.88rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; }
+.ai-text.small { font-size: 0.82rem; }
+.sent-bar { font-weight: 600; color: var(--accent-blue); margin-bottom: 0.4rem; }
+
+/* 提示卡 */
+.hint-card .card-body { color: var(--text-secondary); font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+.hint-card .card-body > i { color: var(--accent-orange); }
+.news-list { max-height: 320px; overflow-y: auto; }
+
+/* 顶部「系统通知 + 个人信息卡」左右两卡 */
+.home-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; align-items: start; }
+@media (max-width: 720px) { .home-top-row { grid-template-columns: 1fr; } }
+.announce-body { display: flex; flex-direction: column; gap: 0.6rem; max-height: 340px; overflow-y: auto; }
+
+/* 「刷新数据」彩色按钮（大盘情绪/评述卡 header 右上角）*/
+.btn-refresh-mini {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.7rem; border-radius: var(--radius-sm);
+    border: none; background: var(--accent-blue); color: #fff;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    transition: filter 0.15s;
+}
+.btn-refresh-mini i { color: var(--accent-orange); }   /* 图标橙，彩色醒目 */
+.btn-refresh-mini:hover { filter: brightness(1.12); }
+.btn-refresh-mini:disabled { cursor: progress; opacity: 0.85; }
+.market-ts { font-size: 0.72rem; color: var(--text-secondary); margin-left: auto; }
+.card-header .market-ts + .btn-refresh-mini { margin-left: 0.5rem; }   /* 时间+按钮并排，按钮不顶到最左 */
+
+/* 旋转 spinner（刷新中的图标自转） */
+@keyframes home-spin { to { transform: rotate(360deg); } }
+.btn-refresh-mini .spin { animation: home-spin 1s linear infinite; }
+
+/* ── 新手引导卡 ── */
+.guide-card { margin-bottom: 1rem; }
+.guide-card .card-header { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.guide-hint { margin-left: auto; font-size: 0.74rem; font-weight: 400; color: var(--text-secondary); }
+.guide-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
+.guide-step {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 1.1rem 0.8rem 0.9rem; border-radius: var(--radius-md);
+    border: 1px solid var(--border-color); background: var(--bg-card);
+    text-decoration: none; color: var(--text-primary);
+    transition: transform 0.18s var(--ease-smooth), box-shadow 0.18s, border-color 0.18s;
+}
+.guide-step:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--accent-blue); }
+.guide-ico {
+    width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.35rem; margin-bottom: 0.55rem; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+.guide-ico.ico-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.guide-ico.ico-green { background: linear-gradient(135deg, #10b981, #059669); }
+.guide-ico.ico-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.guide-ico.ico-orange { background: linear-gradient(135deg, #f59e0b, #ea580c); }
+.guide-num { font-size: 0.72rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px; }
+.guide-title { font-size: 0.96rem; font-weight: 700; margin: 0.15rem 0 0.4rem; }
+.guide-tip { font-size: 0.78rem; line-height: 1.55; color: var(--text-secondary); margin: 0 0 0.65rem; flex: 1; }
+.guide-go { font-size: 0.82rem; font-weight: 600; color: var(--accent-blue); }
+.guide-step:hover .guide-go { text-decoration: underline; }
+.guide-foot {
+    margin-top: 0.9rem; padding: 0.6rem 0.8rem; border-radius: var(--radius-sm);
+    background: var(--bg-card-header); font-size: 0.78rem; color: var(--text-secondary);
+    display: flex; gap: 0.45rem; align-items: flex-start; line-height: 1.55;
+}
+.guide-foot i { color: var(--accent-orange); margin-top: 0.1rem; flex-shrink: 0; }
+.guide-foot a { color: var(--accent-blue); }
+@media (max-width: 860px) { .guide-steps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .guide-steps { grid-template-columns: 1fr; } }

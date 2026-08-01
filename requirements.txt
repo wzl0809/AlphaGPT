@@ -1,0 +1,38 @@
+# ===== AlphaGPT 客户端依赖 =====
+# Flask + SocketIO
+Flask>=3.0
+Flask-SocketIO>=5.3
+Flask-SQLAlchemy>=3.1
+python-dotenv>=1.0
+requests>=2.31
+
+# AI / 分析
+litellm  # LLM 多 provider 路由(DeepSeek→GLM→通义),Phase 0 引入;装不上时 deepseek.py 自动降级 requests 直连
+efinance  # 大盘行情数据源(东财),Phase 0 引入,与 akshare 互为 fallback(同走 push2his)
+json-repair  # LLM 返回坏 JSON 的鲁棒修复兜底
+pydantic>=2  # LLM 结构化输出 schema(研究仪表盘 AnalysisReportSchema)
+
+# 训练核心依赖（core_engine/AlphaGPT.py）
+torch>=2.1
+akshare  # K线/行情主数据源：东财 stock_zh_a_hist + 新浪 stock_zh_a_daily/spot + legu 涨跌家数
+baostock  # K线二级兜底 + 大盘指数 EOD 兜底（非东财，真异构）
+tushare  # K线三级兜底（akshare→新浪→baostock→tushare 末级）；读 TUSHARE_TOKEN，无 token 自动跳过
+pyarrow  # K线 parquet 缓存引擎（data_source._write_cache: to_parquet engine='pyarrow'）；缺则缓存读写崩
+pandas
+numpy
+matplotlib
+
+# 硬件监控（hw_monitor 用）
+psutil>=5.9
+# NVIDIA GPU 信息（可选，缺失时 hw_monitor 回退）
+pynvml  # 如需 GPU 详细信息，取消注释安装
+
+# 本地存储/工具
+SQLAlchemy # 已含 SQLite 驱动
+
+# 发布形态（托盘图标 + 无窗口后台运行；见 web/lifecycle.py）
+pystray  # 系统托盘图标（运行状态/双击重开浏览器/右键退出）；缺失时 lifecycle 自动降级为仅空闲兜底
+pillow   # 托盘图标现场绘制 PIL.Image（matplotlib 亦间接依赖，此处显式声明）
+
+# ===== 开发期额外（明文运行，暂不加密打包）=====
+# Cython / PyInstaller / NSIS 仅在最终分发前手动使用，见 docs/07

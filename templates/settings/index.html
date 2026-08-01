@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}系统设置{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/settings.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-gear"></i> 系统设置</h2>
+    <p class="page-sub">个人信息 · 硬件识别 · API Key · 清理</p>
+</div>
+
+<div class="set-grid">
+{# ── 个人信息（手机/QQ/微信；邮箱本期不改）── #}
+<div class="card">
+    <div class="card-header"><i class="bi bi-person-badge"></i> 个人信息</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('.save_profile') }}">
+            <label class="form-label">邮箱（登录账号）</label>
+            <input type="email" class="form-control" value="{{ profile.email or '' }}" disabled>
+            <label class="form-label mt-2">昵称</label>
+            <input type="text" class="form-control" value="{{ profile.username or '' }}" disabled>
+            <div class="row g-2" style="margin-top:2px;">
+                <div class="col-md-4"><label class="form-label">手机号</label>
+                    <input type="text" name="phone" class="form-control" value="{{ profile.phone or '' }}"></div>
+                <div class="col-md-4"><label class="form-label">QQ号</label>
+                    <input type="text" name="qq" class="form-control" value="{{ profile.qq or '' }}"></div>
+                <div class="col-md-4"><label class="form-label">微信号</label>
+                    <input type="text" name="wechat" class="form-control" value="{{ profile.wechat or '' }}"></div>
+            </div>
+            <button class="btn btn-primary-custom mt-3" type="submit"><i class="bi bi-save"></i> 保存个人信息</button>
+        </form>
+    </div>
+</div>
+
+{# ── 修改密码 ── #}
+<div class="card" id="password">
+    <div class="card-header"><i class="bi bi-shield-lock"></i> 修改密码</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('.save_password') }}" autocomplete="off">
+            <label class="form-label">原密码</label>
+            <input type="password" name="old_password" class="form-control" required autocomplete="current-password">
+            <label class="form-label mt-2">新密码（至少 8 位，建议字母数字混合）</label>
+            <input type="password" name="new_password" class="form-control" minlength="8" required autocomplete="new-password">
+            <label class="form-label mt-2">确认新密码</label>
+            <input type="password" name="confirm_password" class="form-control" minlength="8" required autocomplete="new-password">
+            <button class="btn btn-primary-custom mt-3" type="submit"><i class="bi bi-check-lg"></i> 确认修改</button>
+            <div style="margin-top:0.6rem;padding:0.55rem 0.8rem;border-radius:6px;background:rgba(220,53,69,0.12);border:1px solid rgba(220,53,69,0.45);font-size:0.85rem;line-height:1.5;">
+                <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;margin-right:0.2rem;"></i>
+                为安全，提交成功后将<strong>立即退出当前登录</strong>，需用<strong>新密码</strong>重新登录。
+            </div>
+            <p class="form-text mt-2">如怀疑账号被盗，修改密码即可让所有设备下线；或联系管理员冻结。</p>
+        </form>
+    </div>
+</div>
+
+    {# ── 硬件信息 ── #}
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-cpu"></i> 硬件识别
+            <form method="post" action="{{ url_for('.refresh_hw') }}" style="margin-left:auto;">
+                <button class="btn btn-outline-custom btn-sm" type="submit" title="重新检测硬件与依赖（绕过缓存）"><i class="bi bi-arrow-clockwise"></i> 刷新硬件</button>
+            </form>
+        </div>
+        <div class="card-body">
+            {% if hw.error %}
+            <div class="empty-state small"><i class="bi bi-exclamation-triangle"></i><span>读取失败：{{ hw.error }}</span></div>
+            {% else %}
+            <div class="kv-list">
+                <div><span class="kv-k">CPU</span><span class="kv-v">{{ hw.cpu_model }}</span></div>
+                <div><span class="kv-k">核心数</span><span class="kv-v">{{ hw.cpu_cores }} 逻辑 / {{ hw.cpu_cores_physical }} 物理</span></div>
+                <div><span class="kv-k">内存</span><span class="kv-v">{{ hw.ram_gb }} GB</span></div>
+                <div><span class="kv-k">操作系统</span><span class="kv-v">{{ hw.os }}</span></div>
+                <div><span class="kv-k">Python</span><span class="kv-v">{{ hw.python_ver }}</span></div>
+            </div>
+            <div class="kv-k" style="margin-top:0.8rem;">显卡（GPU 实时负载需 pynvml，仅 NVIDIA；AMD 仅显示型号）</div>
+            <div class="gpu-list">
+                {% for g in hw.gpus or [] %}
+                <div class="gpu-item">
+                    <i class="bi bi-gpu-card"></i>
+                    <div><div class="gpu-name">{{ g.name }}</div>
+                    <div class="gpu-sub">{% if g.vram_mb %}显存 {{ (g.vram_mb/1024)|round(1) }} GB{% else %}显存未知（WMI 受限）{% endif %}</div></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── API Key ── #}
+    <div class="card" id="ai">
+        <div class="card-header"><i class="bi bi-key"></i> API Key 管理
+            <span class="enc-note">{{ enc_note }}</span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('.save_apikeys') }}">
+                {# ── AI 大模型（任选其一即可开通 AI 研究仪表盘）── #}
+                <div class="apikey-group">
+                    <div class="apikey-group-title"><i class="bi bi-robot"></i> AI 大模型（任选其一开通）</div>
+                    <label class="form-label">① DeepSeek API Key <span class="help-tip" data-tip="DeepSeek 官方 key，开箱即用。到 platform.deepseek.com 申请，填 sk- 开头。与下方 OpenAI 兼容端点二选一即可；都填则优先用 DeepSeek。">?</span><a href="https://platform.deepseek.com/" target="_blank" rel="noopener" class="reg-link cheap"><i class="bi bi-currency-yen"></i> 低价充值</a></label>
+                    <input type="password" name="deepseek" class="form-control"
+                           value="{{ keys.get('deepseek','') }}" placeholder="sk-...">
+
+                    <label class="form-label mt-2">② OpenAI 兼容端点（自定义） <span class="help-tip" data-tip="支持任何兼容 OpenAI 接口的服务：OpenAI 官方、Kimi 月之暗面、零一万物 Yi、智谱 BigModel、通义千问、OpenRouter、硅基流动、Ollama 本地、vLLM 自建等。三件套都要填：接口地址、模型名、API Key。">?</span><a href="https://build.nvidia.com/" target="_blank" rel="noopener" class="reg-link free"><i class="bi bi-gift-fill"></i> 免费</a></label>
+                    <input type="text" name="openai_compat_base_url" class="form-control"
+                           value="{{ keys.get('openai_compat_base_url','') }}"
+                           placeholder="接口地址，如 https://api.openai.com/v1">
+                    <input type="text" name="openai_compat_model" class="form-control mt-2"
+                           value="{{ keys.get('openai_compat_model','') }}"
+                           placeholder="模型名，如 gpt-4o-mini / moonshot-v1-8k / yi-large / glm-4 / qwen-plus">
+                    <input type="password" name="openai_compat" class="form-control mt-2"
+                           value="{{ keys.get('openai_compat','') }}" placeholder="该服务的 API Key">
+                    <details class="apikey-help">
+                        <summary>📋 支持的常见端点与填写示例</summary>
+                        <ul>
+                            <li><b>OpenAI</b>：地址 https://api.openai.com/v1 · 模型 gpt-4o-mini / gpt-4o</li>
+                            <li><b>Kimi（月之暗面）</b>：地址 https://api.moonshot.cn/v1 · 模型 moonshot-v1-8k</li>
+                            <li><b>零一 Yi</b>：地址 https://api.lingyiwanwu.com/v1 · 模型 yi-large</li>
+                            <li><b>智谱 BigModel（兼容模式）</b>：地址 https://open.bigmodel.cn/api/paas/v4 · 模型 glm-4</li>
+                            <li><b>通义千问</b>：地址 https://dashscope.aliyuncs.com/compatible-mode/v1 · 模型 qwen-plus</li>
+                            <li><b>OpenRouter</b>：地址 https://openrouter.ai/api/v1 · 模型 openai/gpt-4o-mini</li>
+                            <li><b>硅基流动 SiliconFlow</b>：地址 https://api.siliconflow.cn/v1 · 模型 Qwen/Qwen2.5-7B-Instruct</li>
+                            <li><b>Ollama 本地</b>：地址 http://localhost:11434/v1 · 模型 llama3（Key 随便填一个字）</li>
+                            <li><b>vLLM 自建</b>：地址 http://你的服务器:8000/v1 · 模型 你部署的模型名</li>
+                        </ul>
+                        <p class="form-text">本系统用 LiteLLM 路由：填了 DeepSeek 优先用 DeepSeek；没填 DeepSeek 但填了 OpenAI 兼容端点则用它；都没填则关闭 AI（纯量化信号照常工作，量化页右弧与共振会显示"未启用 AI"）。地址末尾通常是 /v1 或 /compatible-mode/v1，模型名按各服务商文档填。</p>
+                    </details>
+                </div>
+
+                <div class="apikey-group">
+                    <div class="apikey-group-title"><i class="bi bi-newspaper"></i> 新闻 / 数据源（可选）</div>
+                    <label class="form-label">Tavily API Key <span class="help-tip" data-tip="Tavily 新闻搜索 key，用于量化页/首页的新闻情绪分析。到 tavily.com 申请。与 AI 大模型 key 相互独立。">?</span><a href="https://www.tavily.com/" target="_blank" rel="noopener" class="reg-link free"><i class="bi bi-stars"></i> 有免费额度</a></label>
+                    <input type="password" name="tavily" class="form-control"
+                           value="{{ keys.get('tavily','') }}" placeholder="tvly-...">
+                    <label class="form-label mt-2">Tushare Token <span class="help-tip" data-tip="Tushare 数据 token（可选），akshare/baostock 取数失败时的第三备选数据源。到 tushare.pro 注册。">?</span><a href="https://tushare.pro/weborder/#/login?reg=1163692" target="_blank" rel="noopener" class="reg-link free"><i class="bi bi-stars"></i> 有免费额度</a></label>
+                    <input type="password" name="tushare" class="form-control"
+                           value="{{ keys.get('tushare','') }}" placeholder="数据源 token（可选）">
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom mt-3"><i class="bi bi-save"></i> 保存</button>
+                <p class="form-text mt-2">已配置的 Key 以掩码点显示，不动即保留；<b>清空输入框再保存 = 删除该 Key</b>（立即生效，加密存本地）。AI 大模型任选一家开通，即启用「首页大盘分析」与「量化个股研究仪表盘」。</p>
+            </form>
+        </div>
+    </div>
+
+    {# ── 数据源 / 性能（从训练配置页挪来：环境调优，非策略，配一次全局生效）── #}
+    <div class="card">
+        <div class="card-header"><i class="bi bi-speedometer2"></i> 数据源 / 性能</div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('.save_perf') }}">
+                <label class="form-label">数据源并发（两融数据获取线程数）</label>
+                <input type="number" name="margin_workers" class="form-control" min="1" max="16"
+                       value="{{ perf.margin_workers }}" required>
+                <p class="form-text">默认 4；被数据源限速时改 1~2。配一次，所有训练生效。</p>
+                <label class="form-label mt-2">运算核心设置（一般默认即可，自动识别无需修改）</label>
+                <input type="number" name="cpu_threads" class="form-control" min="0" max="64"
+                       value="{{ perf.cpu_threads }}" required>
+                <p class="form-text">0 = 自动，默认NVIDIA的CUDA运算，无则自动降级CPU运算；如无CUDA用纯 CPU 运算，可设置最大线程数，强制满载运算（见左侧硬件识别）。</p>
+                <button type="submit" class="btn btn-primary-custom mt-3"><i class="bi bi-save"></i> 保存</button>
+            </form>
+        </div>
+    </div>
+
+    {# ── 清理入口 ── #}
+    <div class="card">
+        <div class="card-header"><i class="bi bi-eraser"></i> 存储清理</div>
+        <div class="card-body clean-links">
+            <a href="{{ url_for('.reports_cleanup') }}" class="clean-card">
+                <i class="bi bi-file-earmark-text"></i>
+                <div><div class="cl-title">reports 训练日志清理</div><div class="cl-sub">回测报告 / OOS md / 基准图 PNG</div></div>
+            </a>
+            <a href="{{ url_for('.checkpoints_cleanup') }}" class="clean-card">
+                <i class="bi bi-save2"></i>
+                <div><div class="cl-title">checkpoints 断点续训清理</div><div class="cl-sub">*.ckpt.pt（正常训练后自动清理）</div></div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

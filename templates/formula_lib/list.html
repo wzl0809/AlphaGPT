@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "_macros/member.html" import upgrade_cta %}
+{% block title %}公式库{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-collection"></i> 公式库</h2>
+    <p class="page-sub">共 {{ items.total }} 个公式 · 容量 {% if cap %}<b style="{{ 'color:var(--accent-orange)' if items.total >= cap - 1 else '' }}">{{ items.total }}/{{ cap }}</b>{% else %}{{ items.total }}/∞{% endif %} · 来源/夏普/回撤/年化筛选排序</p>
+</div>
+
+{% if cap and items.total >= cap - 1 %}
+{{ upgrade_cta('公式库容量' + ('已满' if items.total >= cap else '即将用尽'), '免费上限 ' ~ cap ~ ' 个公式。需要更大容量可联系开发者定制扩展。') }}
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        {# ── 筛选条 ── #}
+        <form method="get" class="filter-bar" id="filterForm">
+            <div class="filter-input stock-input-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="代码"
+                       class="form-control stock-input" id="filterStock" autocomplete="off">
+            </div>
+            <select name="source" class="form-select filter-select">
+                <option value="">全部来源</option>
+                {% for val, lbl in source_options %}
+                <option value="{{ val }}" {{ 'selected' if source == val else '' }}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+            <select name="order" class="form-select filter-select" id="orderSelect">
+                <option value="sharpe_desc" {{ 'selected' if order == 'sharpe_desc' else '' }}>夏普降序</option>
+                <option value="dd_asc" {{ 'selected' if order == 'dd_asc' else '' }}>回撤升序</option>
+                <option value="date_desc" {{ 'selected' if order == 'date_desc' else '' }}>日期降序</option>
+                <option value="annual_desc" {{ 'selected' if order == 'annual_desc' else '' }}>年化降序</option>
+            </select>
+            <button type="submit" class="btn btn-primary-custom"><i class="bi bi-funnel"></i> 搜索</button>
+        </form>
+
+        {# ── 列表 ── #}
+        {% if items.items %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>来源</th>
+                        <th>夏普</th>
+                        <th>最大回撤</th>
+                        <th>年化</th>
+                        <th>AI 名称</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in items.items %}
+                    {% set is_locked = f.id in locked_ids %}
+                    <tr class="{{ 'locked-row' if is_locked else '' }}">
+                        <td>
+                            <div class="stock-cell">
+                                <span class="stock-code">{{ f.stock_code }}</span>
+                            </div>
+                        </td>
+                        <td><span class="src-badge src-{{ f.source }}">{{ f.source|source_label }}</span></td>
+                        <td><span class="metric-value {{ f.test_sharpe|sharpe_color }}">{{ '%.3f'|format(f.test_sharpe or 0) }}</span></td>
+                        <td><span class="metric-value down">{{ f.max_dd|pct if f.max_dd else '--' }}</span></td>
+                        <td><span class="metric-value {{ 'up' if (f.ann_ret or 0) > 0 else 'down' }}">{{ f.ann_ret|pct if f.ann_ret is not none else '--' }}</span></td>
+                        <td><span class="ai-name">{{ f.ai_name or '—' }}</span></td>
+                        <td class="col-actions">
+                            {% if is_locked %}
+                            <span class="icon-btn locked-action" title="已锁定（公式库已满，免费额度已用尽）——删除多余公式后解锁详情/分享/量化"><i class="bi bi-lock"></i></span>
+                            {% else %}
+                            <a href="{{ url_for('.detail', fid=f.id) }}" class="icon-btn" title="详情"><i class="bi bi-eye"></i></a>
+                            {% if f.source == 'self' %}
+                            <button class="icon-btn" title="分享到策略贴板" data-name="{{ f.ai_name or f.stock_code }}" data-suggest="{{ f|suggest_price }}" onclick="openSell({{ f.id }}, this.dataset.name, this.dataset.suggest)"><i class="bi bi-share-fill"></i></button>
+                            {% endif %}
+                            <form method="post" action="{{ url_for('.to_quant', fid=f.id) }}" class="inline-form">
+                                <button class="icon-btn" title="加入量化信号" onclick="return confirm('将此公式加入量化信号跟踪列表？')"><i class="bi bi-graph-up-arrow"></i></button>
+                            </form>
+                            {% endif %}
+                            {# 删除始终可用：删 unlocked→原 locked 上移解锁；删 locked→清理低质公式 #}
+                            <form method="post" action="{{ url_for('.delete', fid=f.id) }}" class="inline-form">
+                                <button class="icon-btn danger" title="删除" onclick="return confirm('确认删除此公式？基准图文件会保留。')"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── 分页 ── #}
+        {% if items.pages > 1 %}
+        <nav class="pagination">
+            {% if items.has_prev %}
+                <a href="{{ url_for('.index', page=items.prev_num, q=q, source=source, order=order) }}" class="page-btn">« 上一页</a>
+            {% endif %}
+            <span class="page-info">第 {{ items.page }} / {{ items.pages }} 页</span>
+            {% if items.has_next %}
+                <a href="{{ url_for('.index', page=items.next_num, q=q, source=source, order=order) }}" class="page-btn">下一页 »</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>公式库为空</p>
+            <span>前往「训练系统」训练并保存公式</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── 出售弹窗 ── #}
+<div class="modal-mask" id="sellModal">
+    <div class="modal-card">
+        <form method="post" id="sellForm">
+            <div class="modal-head"><i class="bi bi-currency-exchange"></i> 出售公式</div>
+            <div class="modal-body">
+                <p>正在出售：<b id="sellName"></b></p>
+                <label class="form-label">售价（算力）</label>
+                <input type="number" name="price" id="sellPrice" class="form-control" min="0" max="1000" step="10" value="0" required>
+                <p class="form-text" id="sellSuggest">售价 0-1000 算力（0=不上架）</p>
+                <p class="form-text">分账：平台 50% / 作者 50%。</p>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-outline-custom" onclick="closeSell()">取消</button>
+                <button type="submit" class="btn btn-primary-custom"><i class="bi bi-check2"></i> 确认出售</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const SELL_URL_BASE = "{{ url_for('.index') }}";  // 占位，sell 用绝对 action 设置
+    let _sellFid = null;
+    function openSell(fid, name, suggest) {
+        _sellFid = fid;
+        document.getElementById('sellName').textContent = name;
+        document.getElementById('sellPrice').value = suggest || 0;
+        document.getElementById('sellSuggest').textContent = suggest
+            ? ('建议售价 ' + suggest + ' 算力（基于夏普与回撤估算，0=不上架，可在 0-1000 间调整）')
+            : '售价 0-1000 算力（0=不上架）';
+        document.getElementById('sellForm').action = '/formula/' + fid + '/sell';
+        document.getElementById('sellModal').classList.add('show');
+    }
+    function closeSell() { document.getElementById('sellModal').classList.remove('show'); }
+    document.getElementById('orderSelect')?.addEventListener('change', () => document.getElementById('filterForm').submit());
+    document.querySelector('select[name="source"]')?.addEventListener('change', () => document.getElementById('filterForm').submit());
+</script>
+<script src="{{ url_for('static', filename='js/formula_lib.js') }}"></script>
+{% endblock %}

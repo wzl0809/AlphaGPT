@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}我的分享 · 策略贴板{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/trade_hall.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-box-seam"></i> 我的分享</h2>
+    <p class="page-sub">共 {{ count }} 个挂单 · 一键下架在售公式 · <a href="{{ url_for('.index') }}">返回策略贴板</a></p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="filter-bar" id="filterForm">
+            <select name="status" class="form-select filter-select" id="statusSelect">
+                {% for val, lbl in status_options %}
+                <option value="{{ val }}" {{ 'selected' if status == val else '' }}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary-custom"><i class="bi bi-funnel"></i> 筛选</button>
+        </form>
+
+        {% if items %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>价格</th>
+                        <th>夏普</th>
+                        <th>最大回撤</th>
+                        <th>状态</th>
+                        <th>时间</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in items %}
+                    {% set is_active = l.status == 'active' %}
+                    <tr>
+                        <td>
+                            <div class="stock-cell">
+                                <span class="stock-code">{{ l.stock_code }}</span>
+                            </div>
+                        </td>
+                        <td><span class="price-tag">{{ l.price_nexus }} 算力</span></td>
+                        <td><span class="metric-value {{ l.test_sharpe|sharpe_color }}">{{ '%.3f'|format((l.test_sharpe or 0)|float) }}</span></td>
+                        <td><span class="metric-value down">{{ l.max_dd|pct if l.max_dd is not none else '--' }}</span></td>
+                        <td>
+                            {% if l.status == 'active' %}<span class="src-badge src-bought">在售</span>
+                            {% elif l.status == 'sold' %}<span class="src-badge src-relay">已售</span>
+                            {% else %}<span class="src-badge src-self">已下架</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if l.status == 'sold' and l.sold_at %}售出 {{ (l.sold_at or '')[:10] }}
+                            {% else %}上架 {{ (l.created_at or '')[:10] }}{% endif %}
+                        </td>
+                        <td class="col-actions">
+                            {% if is_active %}
+                            <a href="{{ url_for('.detail', lid=l.id) }}" class="icon-btn" title="详情"><i class="bi bi-eye"></i></a>
+                            <form method="post" action="{{ url_for('.remove', lid=l.id) }}" class="inline-form">
+                                <input type="hidden" name="from_my" value="1">
+                                <button class="icon-btn danger" title="下架" onclick="return confirm('确认下架此挂单？')"><i class="bi bi-x-circle"></i></button>
+                            </form>
+                            {% elif l.status == 'sold' %}
+                            <a href="{{ url_for('.orders') }}" class="icon-btn" title="查看成交"><i class="bi bi-receipt"></i></a>
+                            {% else %}
+                            <span class="form-text">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pages > 1 %}
+        <nav class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('.my', page=page-1, status=status) }}" class="page-btn">« 上一页</a>
+            {% endif %}
+            <span class="page-info">第 {{ page }} / {{ pages }} 页</span>
+            {% if page < pages %}
+                <a href="{{ url_for('.my', page=page+1, status=status) }}" class="page-btn">下一页 »</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>{% if status == 'active' %}没有在售挂单{% elif status == 'sold' %}没有已售挂单{% else %}暂无挂单{% endif %}</p>
+            <span>在「公式库」出售公式后，会出现在这里供管理</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('statusSelect')?.addEventListener('change', () => document.getElementById('filterForm').submit());
+</script>
+{% endblock %}

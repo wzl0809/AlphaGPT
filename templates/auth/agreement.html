@@ -1,0 +1,126 @@
+{% extends "auth_base.html" %}
+{% block title %}用户协议与免责声明{% endblock %}
+
+{% block extra_head %}
+<script>try{document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
+<style>
+    /* 协议页内容长：取消 auth 的垂直居中 + 固定 100vh（长内容居中会被裁顶、看不到开头），改从顶部开始、随文档正常滚动 */
+    html { height: auto; }
+    body.auth-page { height: auto; min-height: 100vh; justify-content: flex-start; }
+    /* 协议页：宽版可读卡片，复用 auth 配色 token */
+    .agreement-wrap { width: min(94vw, 760px); margin: 1rem auto 3rem; }
+    .agreement-card {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: var(--radius-md); box-shadow: var(--shadow);
+        padding: 1.6rem 1.8rem;
+    }
+    .agreement-card h1 { font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .agreement-card .ag-date { color: var(--text-secondary); font-size: 0.82rem; margin: 0.3rem 0 0.8rem; }
+    .agreement-card h2 {
+        font-size: 1rem; font-weight: 700; margin: 1.3rem 0 0.5rem;
+        padding-left: 0.55rem; border-left: 3px solid var(--accent-blue);
+    }
+    .agreement-card p, .agreement-card li { font-size: 0.86rem; line-height: 1.75; color: var(--text-primary); }
+    .agreement-card p { margin: 0.4rem 0; }
+    .agreement-card ol { margin: 0.3rem 0 0.5rem 1.3rem; }
+    .agreement-card li { margin: 0.25rem 0; }
+    .agreement-card b { color: var(--text-primary); }
+    .ag-prompt {
+        background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08));
+        border: 1px solid rgba(245,158,11,0.38); border-left: 4px solid var(--accent-orange);
+        border-radius: var(--radius-sm); padding: 0.7rem 0.9rem; margin: 1rem 0 0.5rem;
+        font-size: 0.83rem; line-height: 1.65; color: var(--text-primary);
+    }
+    .ag-prompt b { color: var(--accent-red); }
+    .ag-final {
+        margin-top: 1.4rem; padding: 0.7rem 0.9rem; border-radius: var(--radius-sm);
+        background: var(--bg-card-header); font-size: 0.83rem; color: var(--text-primary);
+        border-left: 3px solid var(--accent-red);
+    }
+    .ag-final b { color: var(--accent-red); }
+    .ag-back { text-align: center; margin-top: 1rem; font-size: 0.85rem; }
+    .ag-back a { color: var(--accent-blue); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agreement-wrap">
+    <div class="agreement-card">
+        <h1><i class="bi bi-shield-check"></i> 用户协议与免责声明</h1>
+        <div class="ag-date">更新日期：2026 年 8 月 1 日 · {{ app_name }}</div>
+
+        <div class="ag-prompt">
+            <b>请您在使用本平台服务前，仔细阅读并充分理解本协议各条款</b>（尤其是以加粗标注的免责与责任限制条款）。当您在注册时勾选「我已阅读并同意」，或以任何方式实际使用本平台服务，即视为您已阅读、理解并同意接受本协议全部条款。<b>如您不同意任一条款，请立即停止注册与使用。</b>
+        </div>
+
+        <h2>第一条　服务性质</h2>
+        <ol>
+            <li>{{ app_name }}（以下简称「本平台」）是一款<b>基于神经网络与强化学习的量化因子挖掘与策略研究实验平台</b>，面向量化方法的学习、研究、复盘与教学场景。</li>
+            <li>本平台提供的核心能力包括：公开行情数据的获取与整理、量化因子的计算与统计检验、数学公式的训练寻优、策略的样本外回测、算法信号的生成，以及由大语言模型（AI）基于上述数据生成的综合研究参考（如「AI 研究仪表盘」「评述」等）。</li>
+            <li><b>本平台是严谨数学运算平台，不是证券投资咨询机构，不持有任何证券业务牌照，不提供证券投资顾问服务</b>，不属于持牌证券投资咨询业务。本平台所有输出均为算法与模型对公开历史数据的研究性回显，<b>不构成任何形式的具体品种的买卖建议或投资咨询意见</b>。</li>
+            <li>本平台不承诺、不预测、不保证任何收益，不代理任何用户进行任何真实的证券或金融交易。</li>
+        </ol>
+
+        <h2>第二条　不构成投资建议</h2>
+        <ol>
+            <li>本平台的所有公式、因子、信号、评分、回测曲线、AI 评述与文字结论，均为算法基于<b>历史公开数据</b>经统计与模型方法生成，<b>属于历史研究回显；历史表现不代表未来，过去有效的规律在未来可能完全失效</b>。</li>
+            <li>上述全部内容<b>仅供量化研究、学习与方法验证参考，不构成任何投资建议、要约、要约邀请或买卖指令</b>，也不应作为您作出任何投资或交易决策的唯一或主要依据。</li>
+            <li>金融市场（含证券、期货、衍生品等）投资具有较高风险，可能造成本金的大幅甚至全部损失。<b>您须基于自身独立判断、独立调查与自身风险承受能力作出一切决策，并对由此产生的全部盈亏与后果自行承担、自负盈亏。</b></li>
+            <li>本平台明确不对任何标的的涨跌、任何策略的未来收益、任何信号的准确性或时效性作出任何明示或暗示的担保。</li>
+        </ol>
+
+        <h2>第三条　AI 输出与数据来源</h2>
+        <ol>
+            <li>本平台所用行情、财务、资金、舆情等数据均来源于<b>公开渠道</b>，本平台对数据的准确性、完整性、及时性、连续性不作任何担保；数据可能存在延迟、缺失、错误、停更，或因第三方接口调整而中断。</li>
+            <li>平台内的 AI 综合参考由第三方大语言模型生成，<b>模型可能产生事实性错误、过时信息或「幻觉」，且含主观推断成分</b>；其输出仅作研究参考，您须自行核实关键数据与结论，不得直接据以下单或决策。</li>
+            <li>在数据缺失或受限时，平台相关字段会标注「数据缺失/降级」等提示，对应结论应视为不可用，本平台不对该等情形下的判断准确性负责。</li>
+        </ol>
+
+        <h2>第四条　用户行为规范</h2>
+        <p>您承诺不通过本平台从事下列行为，否则本平台有权立即中止或终止服务、注销账号，并保留追究责任的权利：</p>
+        <ol>
+            <li>将平台内容当作真实交易指令使用，或对外以「荐股／选股／指导交易」等名义传播、转售、误导他人；</li>
+            <li>以任何自动化手段对平台或其数据源进行恶意抓取、高频访问、压力测试，或使用<b>代理池、IP 轮换、UA 伪造、验证码绕过、逆向工程、反编译、破坏加密</b>等技术手段绕过平台或数据源的限制与防护；</li>
+            <li>倒卖、转让、出租、公开传播平台账号、公式、训练产物或服务，或未经授权将其用于商业用途；</li>
+            <li>发布违法、侵权、欺诈、骚扰或破坏性内容，或利用平台从事洗钱、操纵市场及其他违法活动；</li>
+            <li>其他可能损害平台、其他用户或第三方合法权益，或违反中华人民共和国法律法规的行为。</li>
+        </ol>
+
+        <h2>第五条　免费平台与软件服务</h2>
+        <ol>
+            <li>本平台以<b>免费、共享</b>形式提供：面向量化方法的学习、研究、复盘与教学场景的全部研究能力（含公式训练寻优、样本外回测、量化信号生成、AI 研究仪表盘等）均向用户免费开放，<b>本平台不在客户端内提供任何支付、充值、捐助或会员订阅渠道</b>。</li>
+            <li>本平台的运营收入来自<b>软件定制、二次开发与运维维护等工程服务</b>（如需对软件开发，软件定制、修改、扩展或维护，可联系开发者：<b>wzl0809@gmail.com</b>）。该等服务为开发方与委托方之间的独立软件工程服务关系，<b>不构成对任何标的的买卖建议、不构成证券投资咨询</b>。</li>
+            <li>站内算力、公式、研究能力等可能因服务调整而变更规则；本平台不对算力的长期价值或可用量作任何担保。</li>
+        </ol>
+
+        <h2>第六条　知识产权</h2>
+        <p>本平台的软件、算法、公式、界面、文案、图标等知识产权归本平台或其权利人所有，未经书面授权，任何人不得复制、修改、传播、逆向或用于其他商业目的。用户在平台内自建／训练的公式与研究成果，相关权利依平台规则确定。</p>
+
+        <h2>第七条　服务变更与中止</h2>
+        <ol>
+            <li>本平台为个人独立维护的研究项目，<b>有权随时变更、升级、缩减、暂停或终止全部或部分服务，且无需对用户或任何第三方承担责任</b>。</li>
+            <li>因数据源中断、服务器故障、网络问题、政策法规变化、不可抗力等原因导致服务异常或数据丢失的，本平台不承担责任；建议您对重要研究成果自行备份。</li>
+        </ol>
+
+        <h2>第八条　责任限制</h2>
+        <p>在适用法律允许的最大范围内，<b>对于您或任何第三方因使用或无法使用本平台而遭受的任何直接或间接损失（包括但不限于投资损失、利润损失、数据丢失），本平台概不负责</b>。本平台提供的所有内容与服务均按「现状」提供。</p>
+
+        <h2>第九条　隐私与安全</h2>
+        <p>本平台对用户密码采用内存硬哈希（Argon2）存储，对 API 密钥等敏感信息采用认证加密（Fernet）落盘。除法律法规要求或您另行授权外，本平台不会主动向第三方共享您的账户与隐私信息。具体以平台隐私说明为准。</p>
+
+        <h2>第十条　适龄与资格</h2>
+        <p>您确认：您已年满 18 周岁且具备完全民事行为能力，注册与使用本平台不违反您所受的任何法律法规或合同约束。<b>未成年人不得注册与使用。</b></p>
+        
+        <h2>第十一条　协议更新</h2>
+        <p>本平台有权根据法律法规、产品形态需要不时修订本协议，修订后的协议将在平台公布。<b>协议修订后，您继续使用本平台服务即视为同意修订后的协议；不同意者应停止使用。</b></p>
+
+        <div class="ag-final">
+            <b>再次提示：</b>本平台所有内容仅供量化研究学习，<b>不构成任何投资建议或买卖指令</b>；金融市场有风险，决策请独立判断、自负盈亏。
+        </div>
+
+        <div class="ag-back">
+            <a href="{{ url_for('auth.register') }}"><i class="bi bi-arrow-left"></i> 返回注册</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

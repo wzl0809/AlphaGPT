@@ -1,0 +1,247 @@
+/* ============================================================================
+   quant.css —— 量化信号信号面板（两列：左信号仪表盘 / 右详情）
+   ============================================================================ */
+
+.quant-card { margin-bottom: 1.25rem; }
+.quant-card .card-header { flex-wrap: wrap; gap: 0.5rem; }
+.quant-card .stock-code { font-weight: 700; margin-left: 0.3rem; }
+.quant-card .stock-name { color: var(--text-secondary); font-size: 0.88rem; }
+.qhead-meta { font-size: 0.8rem; color: var(--text-secondary); }
+.regen-form { display: inline-flex; gap: 0.3rem; align-items: center; margin-left: auto; }
+.regen-form input[type=date] { padding: 0.25rem 0.5rem; font-size: 0.78rem; width: 130px; }
+
+/* ── 顶部研究免责声明（醒目）── */
+.quant-disclaimer {
+    display: flex; gap: 0.65rem; align-items: flex-start;
+    background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08));
+    border: 1px solid rgba(245,158,11,0.38); border-left: 4px solid var(--accent-orange, #f59e0b);
+    border-radius: var(--radius-md); padding: 0.7rem 0.9rem; margin-bottom: 1.1rem;
+    font-size: 0.82rem; line-height: 1.55; color: var(--text-primary);
+}
+.quant-disclaimer > i { color: var(--accent-orange, #f59e0b); font-size: 1.15rem; margin-top: 0.15rem; flex-shrink: 0; }
+.quant-disclaimer b { color: var(--accent-red); }
+
+/* ── 跟踪容量进度条（N/50，正常蓝 / >=80% 橙警告 / 满=红）── */
+.track-quota { margin-top: 0.7rem; max-width: 380px; }
+.track-quota-meta {
+    display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+    font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.3rem;
+}
+.track-quota-label b { color: var(--text-primary); font-size: 0.92rem; }
+.track-quota-hint { font-size: 0.76rem; }
+.track-quota-bar {
+    height: 6px; border-radius: 3px; background: var(--bg-card-header); overflow: hidden;
+}
+.track-quota-fill {
+    height: 100%; border-radius: 3px; background: var(--accent-blue);
+    transition: width 0.3s var(--ease-smooth), background 0.3s var(--ease-smooth);
+}
+.track-quota.warn .track-quota-fill { background: var(--accent-orange); }
+.track-quota.warn .track-quota-hint { color: var(--accent-orange); }
+.track-quota.full .track-quota-fill { background: var(--accent-red); }
+.track-quota.full .track-quota-label b,
+.track-quota.full .track-quota-hint { color: var(--accent-red); }
+.track-quota.full .track-quota-label b { font-weight: 700; }
+
+/* ── 基准图重生成 loading 浮层（同步 POST 期间，遮罩风格，不可关闭强制等待）── */
+.regen-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; align-items: center; justify-content: center;
+}
+.regen-overlay.show { display: flex; }
+.regen-overlay-card {
+    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+    padding: 2rem 2.5rem; text-align: center; max-width: 360px; box-shadow: var(--shadow-hover);
+}
+.regen-spinner {
+    width: 42px; height: 42px; margin: 0 auto 1rem;
+    border: 4px solid var(--bg-card-header); border-top-color: var(--accent-blue);
+    border-radius: 50%; animation: regen-spin 0.8s linear infinite;
+}
+.regen-overlay-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+.regen-overlay-msg { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+.regen-overlay-msg b { color: var(--accent-blue); }
+@keyframes regen-spin { to { transform: rotate(360deg); } }
+.regen-overlay-close { display: block; margin-top: 1rem; font-size: 0.78rem; color: var(--text-secondary); text-decoration: underline; cursor: pointer; }
+.regen-overlay-close:hover { color: var(--accent-blue); }
+
+/* AI 卡首屏占位（JS 富渲染前短暂可见，慢机器兜底）*/
+.ai-init { color: var(--text-secondary); font-size: 0.82rem; opacity: 0.8; }
+
+/* 两列：左窄=信号仪表盘（sticky 跟随滚动）/ 右宽=详情 */
+.quant-grid { display: grid; grid-template-columns: 250px 1fr; gap: 1.25rem; align-items: start; }
+@media (max-width: 980px) { .quant-grid { grid-template-columns: 1fr; } .signal-dashboard { position: static !important; } }
+
+/* ── 左：信号综合仪表盘 ── */
+.signal-dashboard {
+    display: flex; flex-direction: column; align-items: center; gap: 0.55rem;
+    position: sticky; top: 0.5rem; align-self: start;
+    padding: 0.5rem 0.25rem;
+}
+
+/* 双半圆环信号圆圈 */
+.signal-badge {
+    width: 156px; height: 156px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+.signal-svg { width: 100%; height: 100%; overflow: visible; }
+.arc-track { fill: none; stroke: var(--bg-param-group); stroke-width: 8; stroke-linecap: round; }
+.arc-ring { fill: none; stroke-width: 1; stroke-linecap: round; stroke-opacity: 0.75; }
+.arc-formula { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 0.5s var(--ease-smooth); }
+.arc-ai { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 0.5s var(--ease-smooth); }
+.sig-text { font-size: 15px; font-weight: 700; fill: var(--text-primary); }
+.sig-sub { font-size: 8px; fill: var(--text-secondary); letter-spacing: 0.2px; }
+/* 内套细边圆圈：紧贴外圈双半圆环（76% 直径 = 弧内缘 38% 半径），buy 红 / hold 灰 */
+.signal-badge::before {
+    content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 76%; height: 76%; border-radius: 50%;
+    background: var(--bg-metric); z-index: 0;
+    border: 2px solid var(--border-color); box-sizing: border-box;
+}
+.signal-svg { position: relative; z-index: 1; }
+.signal-badge.buy .sig-text { fill: var(--accent-red); }
+.signal-badge.hold .sig-text { fill: var(--text-secondary); }
+.signal-badge.sig-numeric .sig-text { fill: var(--text-primary); }  /* 数值(合规)模式：中心数字用中性色，不随方向红灰 */
+.signal-badge.buy::before { border-color: var(--accent-red); }
+.signal-badge.hold::before { border-color: var(--text-secondary); }
+/* loading 态：整个信号圆一起「呼吸」(内圈+外圈双半圆+文字同步放大缩小)，不再只左弧单独抖 */
+.signal-badge.loading { animation: sigBreathe 1.2s ease-in-out infinite; transform-origin: center; }
+.signal-badge.loading .sig-text { fill: var(--accent-blue); font-size: 11px; }
+.signal-badge.loading .arc-formula { stroke-dasharray: 50 50 !important; }
+@keyframes sigBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+/* 数据陈旧：整圆置灰降级 */
+.signal-badge.stale { opacity: 0.5; filter: grayscale(0.6); }
+.sig-stale-flag {
+    position: absolute; top: 2px; right: 6px; font-size: 1.2rem; line-height: 1; z-index: 2;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); pointer-events: none;
+}
+
+/* 共振标（公式 vs AI 方向一致性）*/
+.resonance {
+    font-size: 0.76rem; font-weight: 600; padding: 0.18rem 0.7rem; border-radius: 999px;
+    white-space: nowrap; cursor: help;
+}
+.resonance.agree { color: #047857; background: rgba(16,185,129,0.15); }
+.resonance.conflict { color: #b45309; background: rgba(245,158,11,0.18); }
+.resonance.neutral { color: var(--text-secondary); background: var(--bg-param-group); }
+
+/* 双弧数值图例 */
+.arc-legend { display: flex; gap: 0.9rem; font-size: 0.74rem; }
+.arc-legend span { cursor: help; }
+.leg-formula { color: var(--accent-blue, #2563eb); }
+.leg-ai { color: #7c3aed; }
+.arc-legend b { font-size: 0.88rem; }
+
+/* 新鲜度徽标 + 命中率 */
+.signal-meta { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; text-align: center; }
+.fresh-badge { font-size: 0.71rem; padding: 0.12rem 0.5rem; border-radius: 999px; white-space: nowrap; max-width: 200px; cursor: help; }
+.fresh-badge.fresh { color: #047857; background: rgba(16,185,129,0.13); }
+.fresh-badge.stale { color: #b45309; background: rgba(245,158,11,0.16); font-weight: 600; }
+.fresh-badge.unknown { color: var(--text-secondary); background: var(--bg-param-group); }
+.hit-rate { font-size: 0.74rem; color: var(--accent-blue, #2563eb); font-weight: 600; white-space: nowrap; cursor: help; }
+.signal-status { font-size: 0.75rem; color: var(--text-secondary); text-align: center; min-height: 1.1em; line-height: 1.35; max-width: 230px; }
+
+/* 操作（仪表盘内，竖排）*/
+.quant-actions.vertical { display: flex; flex-direction: column; gap: 0.45rem; width: 100%; margin-top: 0.25rem; }
+.quant-actions.vertical > .btn { width: 100%; }
+.action-row { display: flex; gap: 0.4rem; }
+.action-row .btn { flex: 1; }
+.quant-actions .inline-form { flex: 1; display: flex; }
+.quant-actions .inline-form .btn { width: 100%; }
+
+/* ── 右：详情 ── */
+.quant-details { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
+.detail-chart { display: flex; flex-direction: column; align-items: center; }
+.benchmark-img { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.benchmark-img.thumb {
+    max-width: 520px; width: 100%; display: block; margin: 0 auto;
+    cursor: zoom-in; transition: transform 0.2s var(--ease-smooth), box-shadow 0.2s;
+}
+.benchmark-img.thumb:hover { transform: scale(1.02); box-shadow: var(--shadow-hover); }
+.regen-inline { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; justify-content: center; }
+.regen-inline .form-control { width: auto; min-width: 130px; padding: 0.3rem 0.5rem; font-size: 0.8rem; }
+.regen-sep { color: var(--text-secondary); font-size: 0.8rem; }
+.regen-inline .btn { white-space: nowrap; }
+
+.quant-details .metric-grid { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+.metric-card { cursor: help; }
+
+.quant-formula {  }
+.qf-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+.quant-formula .formula-display {
+    font-size: 0.85rem; padding: 0.5rem 0.65rem; border-radius: var(--radius-sm);
+    background: var(--bg-param-group); border: 1px dashed var(--border-color);
+    word-break: break-all; line-height: 1.5;
+}
+
+/* AI 卡 */
+.ai-col { display: flex; flex-direction: column; gap: 0.6rem; }
+.ai-card { background: var(--bg-metric); border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+.ai-head { padding: 0.5rem 0.85rem; font-size: 0.82rem; font-weight: 600; color: var(--accent-blue); background: var(--bg-card-header); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.3rem; }
+.ai-body { padding: 0.7rem 0.85rem; font-size: 0.82rem; color: var(--text-primary); line-height: 1.5; white-space: pre-wrap; max-height: 600px; overflow-y: auto; }
+.ai-hint { font-size: 0.82rem; color: var(--text-secondary); padding: 0.8rem; text-align: center; }
+
+/* 无 AI Key 降级：右弧置灰虚线（区分"未启用" vs "AI评分0=看空"）；.help-tip 组件统一在 base.css */
+.signal-badge.no-ai .arc-ai { stroke: var(--border-color); stroke-dasharray: 2 4 !important; opacity: 0.45; }
+/* AI 卡未启用占位 */
+.ai-card.disabled { opacity: 0.88; }
+.ai-card.disabled .ai-head { color: var(--text-secondary); opacity: 0.75; }
+.ai-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 0.3rem 0; }
+.ai-placeholder > i { font-size: 1.35rem; opacity: 0.55; }
+.ai-placeholder .btn { margin-top: 0.25rem; }
+
+/* 图片放大浮层 */
+.img-lightbox {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88);
+    display: none; align-items: center; justify-content: center; z-index: 300;
+}
+.img-lightbox.show { display: flex; animation: imgLbFade 0.2s var(--ease-smooth); }
+.img-lightbox img {
+    max-width: 92vw; max-height: 92vh; border-radius: var(--radius-md);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5); animation: imgLbZoom 0.25s var(--ease-smooth);
+}
+.lightbox-close {
+    position: fixed; top: 18px; right: 26px; width: 40px; height: 40px;
+    border: none; border-radius: 50%; background: rgba(255, 255, 255, 0.15); color: #fff;
+    font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+}
+.lightbox-close:hover { background: rgba(255, 255, 255, 0.3); }
+@keyframes imgLbFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes imgLbZoom { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ── 信号仪表盘 hover 提示：title→data-tip 即时深色浮层（深色底·白字·悬停即显）──
+   用属性选择器：setResonance/fresh 等 JS 重置 className 不影响 data-tip 属性，提示稳定。
+   观感与 .help-tip(? 角标) 一致；:not(.help-tip) 避免覆盖既有 ? 角标浮层。 */
+.signal-dashboard [data-tip]:not(.help-tip) { cursor: help; position: relative; }
+.signal-dashboard [data-tip]:not(.help-tip)::after {
+    content: attr(data-tip);
+    position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: #1f2937; color: #fff; padding: 0.55rem 0.7rem; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 400; line-height: 1.5; white-space: normal;
+    width: 240px; text-align: left;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.28);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.15s; z-index: 70;
+}
+.signal-dashboard [data-tip]:not(.help-tip):hover::after { opacity: 1; visibility: visible; }
+/* 信号圆圈：弹层改到右侧（旁边浮现，避免遮住下方数值/共振标） */
+.signal-dashboard .signal-badge[data-tip]::after {
+    top: 50%; left: calc(100% + 10px); transform: translateY(-50%); width: 260px;
+}
+
+/* 暗色主题：半透明 pill 上的深色字看不清 → 改亮色、保留绿/琥珀语义（亮色主题完全不动）*/
+[data-theme="dark"] .resonance.agree,
+[data-theme="dark"] .fresh-badge.fresh { color: #6ee7b7; }
+[data-theme="dark"] .resonance.conflict,
+[data-theme="dark"] .fresh-badge.stale { color: #fbbf24; }
+
+/* ── 公式锁定提示（会员过期·公式库超额 → 量化卡禁刷新）── */
+.quant-card .lock-hint {
+    background: rgba(245, 158, 11, 0.12); color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px;
+    padding: 0.45rem 0.6rem; font-size: 0.8rem; margin-bottom: 0.5rem;
+}
+.quant-card .lock-hint a { color: #b45309; text-decoration: underline; }
+.quant-card button:disabled { opacity: 0.5; cursor: not-allowed; }

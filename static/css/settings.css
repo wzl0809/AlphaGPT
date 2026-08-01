@@ -1,0 +1,72 @@
+/* ============================================================================
+   settings.css —— 系统设置页
+   ============================================================================ */
+
+/* 卡片瀑布流（CSS columns）：各卡高度差异大（API Key 最高，且含 <details> 可展开），
+   用 columns 让短卡自动上浮补齐列内空位；<details> 展开时列自动重排，无需 JS。
+   .card 自带 margin-bottom（base.css）提供列内竖向间距。 */
+.set-grid { columns: 2; column-gap: 1.25rem; }
+.set-grid > .card { break-inside: avoid; page-break-inside: avoid; }
+@media (max-width: 1100px) { .set-grid { columns: 1; } }
+
+.kv-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; font-size: 0.86rem; }
+.kv-list .kv-k { display: block; font-size: 0.74rem; color: var(--text-secondary); }
+.kv-list .kv-v { font-weight: 500; word-break: break-all; }
+
+.gpu-list { margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.gpu-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; background: var(--bg-param-group); border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.gpu-item > i { font-size: 1.3rem; color: var(--accent-green); }
+.gpu-name { font-weight: 600; font-size: 0.86rem; }
+.gpu-sub { font-size: 0.74rem; color: var(--text-secondary); }
+
+.enc-note { margin-left: auto; font-size: 0.7rem; color: var(--text-secondary); font-weight: 400; }
+
+/* 依赖 */
+.dep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; }
+.dep-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.84rem; background: var(--bg-metric); }
+.dep-item.ok { border-color: rgba(16,185,129,0.3); }
+.dep-item.ok > i { color: var(--accent-green); }
+.dep-item.miss { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+.dep-item.miss > i { color: var(--accent-red); }
+.dep-name { font-weight: 600; }
+.dep-usage { font-size: 0.72rem; color: var(--text-secondary); margin-left: auto; }
+.miss-box { margin-top: 0.85rem; padding: 0.7rem 0.9rem; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); font-size: 0.85rem; }
+.miss-box code { background: var(--bg-param-group); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; word-break: break-all; }
+.ok-box { margin-top: 0.85rem; color: var(--accent-green); font-size: 0.88rem; }
+
+/* 清理入口 */
+.clean-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+.clean-card { display: flex; align-items: center; gap: 0.7rem; padding: 1rem 1.2rem; background: var(--bg-param-group); border: 1px solid var(--border-color); border-radius: var(--radius-md); flex: 1; min-width: 260px; transition: all var(--transition); color: var(--text-primary); }
+.clean-card:hover { border-color: var(--accent-blue); transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.clean-card > i { font-size: 1.8rem; color: var(--accent-blue); }
+.cl-title { font-weight: 600; font-size: 0.92rem; }
+.cl-sub { font-size: 0.76rem; color: var(--text-secondary); }
+
+/* 清理表 */
+.clean-toolbar { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.85rem; }
+.file-name { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Cascadia Code', monospace; font-size: 0.8rem; }
+.kind-badge { padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+.kind-txt { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+.kind-md { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+.kind-png { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+.kind-html { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+.kind-other { background: var(--bg-param-group); color: var(--text-secondary); }
+
+/* ── API Key 分组（AI 大模型 / 新闻数据源）── */
+.apikey-group { margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px dashed var(--border-color); }
+.apikey-group:last-of-type { border-bottom: none; }
+.apikey-group-title { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem; }
+.apikey-help { margin-top: 0.5rem; font-size: 0.78rem; }
+.apikey-help > summary { cursor: pointer; color: var(--accent-blue); font-weight: 500; padding: 0.2rem 0; }
+.apikey-help[open] > summary { margin-bottom: 0.4rem; }
+.apikey-help ul { margin: 0; padding-left: 1.1rem; color: var(--text-secondary); line-height: 1.7; }
+.apikey-help ul b { color: var(--text-primary); font-weight: 600; }
+
+/* API Key 字段后的注册入口（新页打开）：免费=绿、低价充值=橙 */
+.reg-link { display: inline-flex; align-items: center; gap: 0.2rem; margin-left: 0.45rem; padding: 0.08rem 0.5rem; border-radius: 10px; font-size: 0.72rem; font-weight: 600; text-decoration: none; vertical-align: 1px; white-space: nowrap; transition: background 0.2s, transform 0.2s; }
+.reg-link i { font-size: 0.82rem; }
+.reg-link:hover { transform: translateY(-1px); }
+.reg-link.free { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+.reg-link.free:hover { background: rgba(16,185,129,0.28); }
+.reg-link.cheap { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+.reg-link.cheap:hover { background: rgba(245,158,11,0.28); }

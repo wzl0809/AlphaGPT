@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}挂单详情 · {{ l.stock_code }}{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/train.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/trade_hall.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-shop-window"></i> 挂单详情</h2>
+    <p class="page-sub">
+        <span class="stock-code">{{ l.stock_code }}</span>
+        · 所属用户 <b>{{ (l.seller or {}).username or '—' }}</b>
+        <span class="src-badge src-self">作者分账 50%</span>
+    </p>
+</div>
+
+<div class="detail-grid">
+    {# ── 左：核心指标 + 价格 ── #}
+    <div>
+        <div class="metric-grid">
+            <div class="metric-card"><div class="metric-value {{ l.test_sharpe|sharpe_color }}">{{ '%.3f'|format((l.test_sharpe or 0)|float) }}</div><div class="metric-label">夏普比率</div></div>
+            <div class="metric-card"><div class="metric-value {{ 'up' if (l.ann_ret or 0) > 0 else 'down' }}">{{ l.ann_ret|pct if l.ann_ret is not none else '--' }}</div><div class="metric-label">年化收益</div></div>
+            <div class="metric-card"><div class="metric-value down">{{ l.max_dd|pct if l.max_dd is not none else '--' }}</div><div class="metric-label">最大回撤</div></div>
+            <div class="metric-card"><div class="metric-value neutral">{{ l.price_nexus }}</div><div class="metric-label">算力</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lock"></i> 公式内容（收集后可见）</div>
+            <div class="card-body">
+                {% if l.ai_name %}<div class="ai-name-big">{{ l.ai_name }}</div>{% endif %}
+                <div class="formula-display muted">🔒 公式表达式与 AI 名称在收集后才会公开。上方指标与右侧训练配置真实可信。</div>
+            </div>
+        </div>
+    </div>
+
+    {# ── 右：分享元数据（收集前可见）── #}
+    <div>
+        {% set m = l.formula_meta or {} %}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-megaphone"></i> 训练配置（收集前可见）</div>
+            <div class="card-body">
+                <div class="kv-grid">
+                    <div><span class="kv-k">迭代次数</span><span class="kv-v">{{ m.train_iterations or '—' }}</span></div>
+                    <div><span class="kv-k">Batch</span><span class="kv-v">{{ m.batch_size or '—' }}</span></div>
+                    <div><span class="kv-k">寻优轮数</span><span class="kv-v">{{ m.auto_optimize_runs or '—' }}</span></div>
+                    <div><span class="kv-k">公式长度</span><span class="kv-v">{{ m.max_seq_len or '—' }}</span></div>
+                    <div><span class="kv-k">训练耗时</span><span class="kv-v">{{ '%.0f'|format((m.train_duration_sec or 0)|float) }} 秒</span></div>
+                    <div><span class="kv-k">分享时间</span><span class="kv-v">{{ (l.created_at or '')[:10] }}</span></div>
+                </div>
+                {% if m.factors %}<div class="form-text mt-2">因子：{{ m.factors }}</div>{% endif %}
+            </div>
+        </div>
+
+        {% set hw = m.hardware or {} %}
+        {% if hw %}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-cpu"></i> 训练硬件</div>
+            <div class="card-body">
+                <div class="kv-grid">
+                    <div><span class="kv-k">CPU</span><span class="kv-v">{{ hw.cpu_model or '—' }}</span></div>
+                    <div><span class="kv-k">GPU</span><span class="kv-v">{{ hw.gpu_model or '—' }}（{{ hw.gpu_vram_gb or '—' }} GB）</span></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-actions">
+    {% if mine %}
+    <span class="form-text">这是你的挂单</span>
+    <form method="post" action="{{ url_for('.remove', lid=l.id) }}" class="inline-form">
+        <button class="btn btn-danger-custom" onclick="return confirm('确认下架此挂单？')"><i class="bi bi-x-circle"></i> 下架</button>
+    </form>
+    {% else %}
+    <span class="form-text">当前余额 <b>{{ '%.2f'|format((balance or 0)|float) }}</b> 算力 · 收集即扣 {{ l.price_nexus }} 算力（分账后入所属用户与平台）</span>
+    <form method="post" action="{{ url_for('.buy', lid=l.id) }}" class="inline-form">
+        <button class="btn btn-primary-custom" onclick="return confirm('确认花费 {{ l.price_nexus }} 算力收集此公式？收集后不可退。')"><i class="bi bi-share-fill"></i> 收集策略</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('.index') }}" class="btn btn-outline-custom"><i class="bi bi-arrow-left"></i> 返回策略贴板</a>
+</div>
+{% endblock %}

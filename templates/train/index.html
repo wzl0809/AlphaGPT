@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}训练系统{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/train.css') }}" rel="stylesheet">
+<style>
+    /* 训练参数配置卡片：内部滚动（屏内选择参数，竖屏手机适配） */
+    .param-card .param-scroll {
+        max-height: calc(100vh - 176px);
+        overflow-y: auto; overflow-x: hidden;
+        padding-right: 0.4rem; scroll-behavior: smooth;
+    }
+    .param-card .param-scroll::-webkit-scrollbar { width: 6px; }
+    .param-card .param-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    .param-card .param-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+    @media (max-width: 768px) {
+        .param-card .param-scroll { max-height: calc(100vh - 130px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-cpu"></i> 训练系统</h2>
+    <p class="page-sub">参数对照表（鼠标悬停 ⓘ 查看说明）· 种子策略 A–F · 实时进度 · 结果分类保存</p>
+</div>
+
+<div class="train-layout">
+    {# ───────── 左：参数配置 ──────── #}
+    <div>
+        <div class="card param-card">
+            <div class="card-header"><i class="bi bi-sliders2"></i> 训练参数配置
+                <span style="margin-left:auto;font-size:0.74rem;color:var(--text-secondary);">点击标题折叠</span>
+            </div>
+            <div class="card-body param-scroll">
+                {% for group, params in param_groups.items() %}
+                {% if group == '训练微调' %}
+                {# 种子策略 A–F（展开，排在 训练 组之前）#}
+                <div class="param-group" style="border-color: var(--accent-purple);">
+                    <div class="pg-head" style="color: var(--accent-purple);">
+                        <i class="bi bi-flower1"></i> 种子策略
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="pg-body">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-7">
+                                <label class="form-label">策略
+                                    <span class="help-tip" data-tip="种子决定公式搜索的起跑点。同一标的+同一参数+同一种子 = 完全相同的训练结果（可复现）。不同种子 = 探索公式解空间的不同区域。换种子能排查「公式是真有信号还是运气好」——多次不同种子都跑出相近收益才算稳健。">?</span>
+                                </label>
+                                <select class="form-select" id="seedMode">
+                                    {% for code, label in seed_strategies.items() %}
+                                    <option value="{{ code }}" {{ 'selected' if code == 'A' else '' }}>{{ code }} · {{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label" id="seedRightLabel">当前种子</label>
+                                {# 非D：只读展示（训练时由系统生成并回填真实种子） #}
+                                <span class="seed-display" id="seedDisplay">—（训练时生成）</span>
+                                {# D 极致复现：直接在此输入手动种子 #}
+                                <input type="number" class="form-control" id="manualSeed" value="42" min="1" style="display:none;">
+                            </div>
+                        </div>
+                        <div class="form-text" id="seedHint" style="margin-top:.5rem;font-size:.76rem;line-height:1.5;color:var(--text-secondary);"></div>
+                    </div>
+                </div>
+                {% endif %}
+                {# 高级/微调参数仅定制用户(签名凭证 is_member)开放，余者锁定走默认值——同公式库>5机制，不在 context.py(见 docs/16) #}
+                {% set locked = group not in ('训练数据',) and not is_member %}
+                <div class="param-group {{ 'collapsed' if locked else '' }}">
+                    <div class="pg-head"><i class="bi bi-diagram-3"></i> {{ group }}
+                        {% if locked %}<span class="lock-badge"><i class="bi bi-lock"></i> 锁定</span>{% endif %}
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="pg-body">
+                        {% if locked %}<div class="member-upgrade-bar"><i class="bi bi-stars"></i><span>该组高级/微调参数默认锁定，按默认值训练不影响训练效果；如需解锁高级/微调参数可联系开发者。</span></div>{% endif %}
+                        {% if locked %}<fieldset disabled>{% endif %}
+                        <div class="row g-2">
+                            {% for p in params %}
+                            <div class="col-md-{{ 6 if p.input == 'text' or p.input == 'stock' else 4 }}">
+                                <label class="form-label">{{ p.label }}
+                                    <span class="help-tip" data-tip="{{ p.help }}">?</span>
+                                </label>
+                                {% if p.input == 'select' %}
+                                <select class="form-select" data-p="{{ p.ui }}">
+                                    {% for opt in p.options %}
+                                    <option value="{{ opt }}" {{ 'selected' if opt == (defaults[p.ui]|string) else '' }}>{{ opt }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% elif p.input == 'checkbox' %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" data-p="{{ p.ui }}"
+                                           {{ 'checked' if defaults[p.ui] else '' }} id="chk_{{ p.ui }}">
+                                    <label class="form-check-label" for="chk_{{ p.ui }}" style="font-size:0.85rem;">启用</label>
+                                </div>
+                                {% elif p.input == 'date' %}
+                                <input type="date" class="form-control" data-p="{{ p.ui }}"
+                                       value="{{ defaults[p.ui][:4] }}-{{ defaults[p.ui][4:6] }}-{{ defaults[p.ui][6:8] }}">
+                                {% elif p.input == 'number' %}
+                                <input type="number" class="form-control" data-p="{{ p.ui }}"
+                                       value="{{ defaults[p.ui] }}"
+                                       {% if p.step %}step="{{ p.step }}"{% endif %}
+                                       {% if p.min is defined %}min="{{ p.min }}"{% endif %}
+                                       {% if p.max is defined %}max="{{ p.max }}"{% endif %}>
+                                {% else %}
+                                <input type="text" class="form-control" data-p="{{ p.ui }}"
+                                       value="{{ defaults[p.ui] }}" placeholder="{{ p.label }}">
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if locked %}</fieldset>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ───────── 右：控制 + 进度 + 日志 ──────── #}
+    <div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-play-circle"></i> 训练控制</div>
+            <div class="card-body">
+                {# 训练长时间警示（置于训练控制卡顶端；静态醒目，不闪烁）#}
+                <div class="train-warning" id="trainWarning" style="display:none;">
+                    <i class="bi bi-exclamation-triangle-fill tw-icon"></i>
+                    <div>
+                        <div class="tw-title">训练中 — 请勿关闭或刷新页面，保持网络畅通！耐心等待直至训练结束。</div>
+                        <div class="tw-body">可能持续<b>数十小时</b>，期间系统负载高、发热大。做好散热；断网或关闭页面将<b>中断训练浪费算力</b>！</div>
+                    </div>
+                </div>
+
+                {# 硬件实时监控（训练时高负载才需关注，从顶栏挪到训练控制处）#}
+                <div class="hw-stats" id="hwStats" title="硬件实时监控（训练时高负载）">
+                    <span title="CPU 使用率"><i class="bi bi-cpu"></i> <span id="hwCpu">--</span>%</span>
+                    <span title="内存"><i class="bi bi-memory"></i> <span id="hwRam">--</span>%</span>
+                    <span title="GPU"><i class="bi bi-gpu-card"></i> <span id="hwGpu">--</span>%</span>
+                    <span title="显存"><i class="bi bi-hdd-stack"></i> <span id="hwVRam">--</span>%</span>
+                </div>
+                <div class="train-controls">
+                    <button id="btnStart" class="btn btn-primary-custom" onclick="startTraining()">
+                        <i class="bi bi-play-fill"></i> 开始训练
+                    </button>
+                    <button id="btnStop" class="btn btn-danger-custom" onclick="stopTraining()" disabled>
+                        <i class="bi bi-stop-fill"></i> 停止
+                    </button>
+                    <button class="btn btn-outline-custom" onclick="clearLog()">
+                        <i class="bi bi-eraser"></i> 清空日志
+                    </button>
+                    <span style="margin-left:auto;display:flex;align-items:center;font-size:0.85rem;">
+                        <span class="status-dot idle" id="statusDot"></span>
+                        <span id="statusText">就绪</span>
+                    </span>
+                </div>
+
+                {# 进度 #}
+                <div style="margin-bottom:1rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+                        <span id="progressLabel" style="color:var(--text-secondary);font-size:0.85rem;">等待开始...</span>
+                        <span id="progressPercent" style="font-weight:600;">0%</span>
+                    </div>
+                    <div class="progress-custom">
+                        <div class="progress-bar pct-early" id="progressBar" style="width:0%">0%</div>
+                    </div>
+                </div>
+
+                {# 日志 #}
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+                    <span style="color:var(--text-secondary);font-size:0.85rem;"><i class="bi bi-terminal"></i> 实时日志</span>
+                    <span id="logCount" style="color:var(--text-secondary);font-size:0.75rem;">0 条</span>
+                </div>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </div>
+
+        {# 最佳公式 #}
+        <div class="card hidden" id="bestSection">
+            <div class="card-header"><i class="bi bi-trophy"></i> 最佳公式 · <span id="bestName" style="color:var(--accent-purple);"></span></div>
+            <div class="card-body">
+                <div class="formula-display" id="bestFormulaText">—</div>
+            </div>
+        </div>
+
+        {# 结果分类卡 #}
+        <div class="result-card" id="resultCard">
+            <span class="result-badge normal" id="resultBadge">—</span>
+            <div id="resultMsg" style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:0.75rem;"></div>
+            <div style="font-weight:600;margin-bottom:0.4rem;" id="resStock"></div>
+            <div class="formula-display" id="resFormula" style="margin-bottom:0.85rem;"></div>
+            <div class="metric-grid" style="margin-bottom:0.85rem;">
+                <div class="metric-card"><div class="metric-value neutral" id="mAnnRet">--</div><div class="metric-label">年化收益</div></div>
+                <div class="metric-card"><div class="metric-value down" id="mMaxDd">--</div><div class="metric-label">最大回撤</div></div>
+                <div class="metric-card"><div class="metric-value neutral" id="mWinRate">--</div><div class="metric-label">胜率</div></div>
+                <div class="metric-card"><div class="metric-value neutral" id="mCalmar">--</div><div class="metric-label">Calmar</div></div>
+            </div>
+            <div class="chart-box" style="margin-bottom:0.85rem;">
+                <img id="resChart" src="" alt="基准图" style="display:none;">
+            </div>
+            <button id="btnSave" class="btn btn-primary-custom"><i class="bi bi-save"></i> 保存到公式库</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/train.js') }}"></script>
+{% endblock %}

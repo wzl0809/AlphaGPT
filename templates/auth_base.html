@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 防主题闪烁：首屏渲染前同步恢复 data-theme（base.js 的 initTheme 在 body 末尾，会先闪一下亮色）-->
+    <script>(function(){try{if(localStorage.getItem('alphagpt-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+    <title>{% block title %}{{ app_name }}{% endblock %} · {{ app_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+    <style>
+        /* 独立全屏登录/注册：无侧边栏/顶栏，垂直水平居中；safe center 在内容超高时回落 flex-start，顶部不被裁、可滚动 */
+        html { height: auto; }
+        body.auth-page {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: safe center;
+            min-height: 100vh; padding: 1.25rem 1rem;
+            background: linear-gradient(135deg, var(--bg-body), var(--bg-card));
+        }
+        .auth-brand { text-align: center; margin-bottom: 1.25rem; opacity: .95; }
+        .auth-brand .bi { font-size: 2.6rem; color: var(--accent-blue, #0a84ff); }
+        .auth-brand h2 { font-size: 1.25rem; margin: .5rem 0 0; font-weight: 600; }
+        .auth-brand .brand-sub { font-size: .8rem; opacity: .65; }
+        .auth-theme-toggle {
+            position: fixed; top: 1rem; right: 1.1rem;
+            background: var(--bg-glass, rgba(255,255,255,.08)); border: 1px solid var(--border-color);
+            color: var(--text-primary); border-radius: 999px; padding: .4rem .7rem; cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        /* 卡片垂直居中 + 响应式宽度（非固定宽度）。
+           base.css .auth-card 的 width:100% 在 shrink-to-fit 的 .auth-wrap 父级里会退化成
+           内容宽度（max-width 只封顶、不撑大，导致看着偏窄）。给 .auth-wrap 明确响应式宽度
+           （100%、封顶 420），卡片 width:100% 才能正确解析 → 桌面 420 / 手机铺满自适应。 */
+        body.auth-page .auth-wrap {
+            width: 100%;
+            max-width: 420px;
+            align-items: center;
+            margin: 0;
+        }
+        body.auth-page .auth-flash {
+            position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+            width: min(92vw, 420px); z-index: 50;
+        }
+
+        /* ===== Investor-deck 美学（毛玻璃 + 蓝紫青渐变 + glow/网格底）— 作用于全部 auth 页 =====
+           仿 docs/investor-deck 设计系统：frosted glass card / accent gradient / radial glow + grid。
+           全部以 body.auth-page 限定，不渗到主应用。 */
+        body.auth-page {
+            --deck-accent-grad: linear-gradient(135deg,#5b9bff 0%,#8b5cf6 60%,#22d3ee 110%);
+            --deck-glass-bg: rgba(20,30,58,0.55);
+            --deck-glass-stroke: rgba(148,173,230,0.18);
+            --deck-shadow-glow: 0 0 0 1px var(--deck-glass-stroke), 0 24px 70px rgba(8,12,30,0.55);
+            --deck-ink-1: #f3f6ff; --deck-ink-2: #b9c4e0;
+            background:
+                radial-gradient(1100px 760px at 78% 18%, rgba(59,130,246,0.22), transparent 60%),
+                radial-gradient(960px 720px at 14% 86%, rgba(139,92,246,0.18), transparent 62%),
+                linear-gradient(160deg, #0b1124, #060912 55%, #111a36);
+            background-attachment: fixed;
+        }
+        [data-theme="light"] body.auth-page {
+            --deck-glass-bg: rgba(255,255,255,0.74);
+            --deck-glass-stroke: rgba(20,30,58,0.12);
+            --deck-shadow-glow: 0 0 0 1px var(--deck-glass-stroke), 0 18px 50px rgba(20,30,58,0.16);
+            --deck-ink-1: #0f1830; --deck-ink-2: #3c486b;
+            background:
+                radial-gradient(1100px 760px at 78% 18%, rgba(59,130,246,0.16), transparent 60%),
+                radial-gradient(960px 720px at 14% 86%, rgba(139,92,246,0.10), transparent 62%),
+                linear-gradient(160deg, #e6ebf5, #eef1f7 55%, #dbe2f0);
+        }
+        /* 网格纹理叠层（神经画布 / 卡片在其上） */
+        body.auth-page::before {
+            content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+            background-image:
+                linear-gradient(rgba(148,173,230,0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148,173,230,0.08) 1px, transparent 1px);
+            background-size: 80px 80px;
+            -webkit-mask-image: radial-gradient(ellipse 90% 75% at 50% 45%, #000 30%, transparent 92%);
+            mask-image: radial-gradient(ellipse 90% 75% at 50% 45%, #000 30%, transparent 92%);
+        }
+        [data-theme="light"] body.auth-page::before {
+            background-image:
+                linear-gradient(rgba(20,30,58,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(20,30,58,0.05) 1px, transparent 1px);
+        }
+        /* 品牌：渐变字 + 图标光晕 */
+        body.auth-page .auth-brand { position:relative; z-index:1; }
+        body.auth-page .auth-brand .bi {
+            background: var(--deck-accent-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+            filter: drop-shadow(0 4px 18px rgba(91,155,255,0.45));
+        }
+        body.auth-page .auth-brand h2 {
+            background: var(--deck-accent-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+            font-weight: 800; letter-spacing: -.01em;
+        }
+        body.auth-page .auth-brand .brand-sub { color: var(--deck-ink-2); letter-spacing:.04em; }
+        /* 卡片：毛玻璃 + 顶部高光描边 */
+        body.auth-page .auth-wrap { position:relative; z-index:1; }
+        body.auth-page .auth-card {
+            position: relative;
+            background: var(--deck-glass-bg);
+            backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+            border: 1px solid var(--deck-glass-stroke);
+            box-shadow: var(--deck-shadow-glow);
+            border-radius: 22px; overflow: hidden;
+        }
+        body.auth-page .auth-card::before {
+            content:""; position:absolute; left:0; right:0; top:0; height:1px;
+            background: linear-gradient(90deg, transparent, rgba(148,173,230,0.55), transparent);
+        }
+        body.auth-page .auth-head h3 {
+            background: var(--deck-accent-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+            font-weight: 800;
+        }
+        /* 输入框：毛玻璃凹槽 */
+        body.auth-page .auth-card .form-label { color: var(--deck-ink-2); font-size:.82rem; letter-spacing:.02em; }
+        body.auth-page .auth-card .form-control {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--deck-glass-stroke);
+            color: var(--deck-ink-1); border-radius: 12px; padding: .7rem .9rem;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        body.auth-page .auth-card .form-control::placeholder { color: rgba(185,196,224,0.5); }
+        body.auth-page .auth-card .form-control:focus {
+            background: rgba(255,255,255,0.10); border-color: rgba(91,155,255,0.6);
+            box-shadow: 0 0 0 3px rgba(91,155,255,0.18); color:#fff;
+        }
+        [data-theme="light"] body.auth-page .auth-card .form-control {
+            background: rgba(255,255,255,0.7); color:#0f1830; border-color: rgba(20,30,58,0.14);
+        }
+        [data-theme="light"] body.auth-page .auth-card .form-control::placeholder { color: rgba(60,72,107,0.5); }
+        [data-theme="light"] body.auth-page .auth-card .form-control:focus {
+            background:#fff; border-color: rgba(47,111,214,0.6); box-shadow: 0 0 0 3px rgba(47,111,214,0.16);
+        }
+        /* 主按钮：用 base.css 原 .btn-primary-custom 样式，不覆盖为 deck 蓝紫渐变 */
+        /* 主题切换按钮：毛玻璃 */
+        body.auth-page .auth-theme-toggle {
+            background: var(--deck-glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-color: var(--deck-glass-stroke);
+        }
+        body.auth-page .auth-foot a { color: #5b9bff; }
+        [data-theme="light"] body.auth-page .auth-foot a { color: #2f6fd6; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="auth-page">
+    <button class="auth-theme-toggle" onclick="toggleTheme()" title="切换主题">
+        <i class="bi bi-moon-stars" id="themeIcon"></i>
+    </button>
+    <button class="auth-theme-toggle" onclick="toggleFullscreen()" title="全屏 (F)" style="right:4.5rem;">
+        <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+
+    {% block auth_flash %}
+    <div class="auth-flash">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat, msg in messages %}
+            <div class="flash flash-{{ cat }}">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    {% endblock %}
+
+    {% block auth_brand %}
+    <div class="auth-brand">
+        <i class="bi bi-robot"></i>
+        <h2>{{ app_name }}</h2>
+        <div class="brand-sub">基于神经网络与强化学习的量化因子挖掘与策略研究实验平台</div>
+    </div>
+    {% endblock %}
+
+    {% block content %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
