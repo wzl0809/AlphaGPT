@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}分享成功 · 策略贴板{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-receipt"></i> 分享成功</h2>
+    <p class="page-sub">共 {{ count }} 条成交记录（买/卖） · <a href="{{ url_for('.my') }}">我的分享</a> · <a href="{{ url_for('.index') }}">返回策略贴板</a></p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if items %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>角色</th>
+                        <th>成交价</th>
+                        <th>卖方到账</th>
+                        <th>平台分账</th>
+                        <th>时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in items %}
+                    {% set is_buyer = me_id and me_id == (o.buyer or {}).id %}
+                    <tr>
+                        <td><span class="stock-code">{{ o.listing_stock or '—' }}</span></td>
+                        <td>{% if is_buyer %}<span class="src-badge src-bought">买入</span>{% else %}<span class="src-badge src-self">卖出</span>{% endif %}</td>
+                        <td><span class="price-tag">{{ o.price }} 算力</span></td>
+                        <td><span class="metric-value up">+{{ o.seller_share }}</span></td>
+                        <td><span class="metric-value neutral">{{ o.platform_share }}</span></td>
+                        <td>{{ (o.created_at or '')[:10] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pages > 1 %}
+        <nav class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('.orders', page=page-1) }}" class="page-btn">« 上一页</a>
+            {% endif %}
+            <span class="page-info">第 {{ page }} / {{ pages }} 页</span>
+            {% if page < pages %}
+                <a href="{{ url_for('.orders', page=page+1) }}" class="page-btn">下一页 »</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>暂无成交记录</p>
+            <span>去策略贴板购买公式，或在公式库出售自己的公式</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

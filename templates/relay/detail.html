@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}接力详情 · {{ r.stock_code }}{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/train.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/bounty.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-people"></i> 接力详情</h2>
+    <p class="page-sub">
+        <span class="stock-code">{{ r.stock_code }}</span>
+        · 发起人 <b>{{ (r.initiator or {}).username or '—' }}</b>
+        · 状态 <span class="src-badge src-{{ 'bought' if r.status in ('recruiting','running') else 'self' }}">{{ r.status }}</span>
+    </p>
+</div>
+
+<div class="metric-grid">
+    <div class="metric-card"><div class="metric-value up">{{ r.reward_per_participant }}</div><div class="metric-label">单人奖励（算力）</div></div>
+    <div class="metric-card"><div class="metric-value {{ ((r.target_config or {}).min_sharpe or 0)|sharpe_color }}">{{ (r.target_config or {}).min_sharpe if (r.target_config or {}).min_sharpe is not none else '—' }}</div><div class="metric-label">达标夏普 ≥</div></div>
+    <div class="metric-card"><div class="metric-value neutral">{{ r.max_participants or '—' }}</div><div class="metric-label">上限人数</div></div>
+    <div class="metric-card"><div class="metric-value neutral">{{ r.participants_count if r.participants_count is not none else 0 }}</div><div class="metric-label">参与数</div></div>
+</div>
+
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list-check"></i> 算力门槛（服务端硬校验）</div>
+        <div class="card-body">
+            {% set mc = r.min_compute or {} %}
+            <div class="kv-grid">
+                <div><span class="kv-k">GPU 显存 ≥</span><span class="kv-v">{{ mc.min_gpu_vram or '不限' }} GB</span></div>
+                <div><span class="kv-k">CPU 核数 ≥</span><span class="kv-v">{{ mc.min_cpu_cores or '不限' }}</span></div>
+                <div><span class="kv-k">截止时间</span><span class="kv-v">{{ (r.deadline or '')[:16] if r.deadline else '—' }}</span></div>
+                <div><span class="kv-k">托管金</span><span class="kv-v">{{ r.escrow_amount or '—' }} 算力</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="bi bi-trophy"></i> 汇总结果</div>
+        <div class="card-body">
+            {% if r.status == 'completed' %}
+                {% if r.best_sharpe is not none %}
+                <p>最优公式夏普：<span class="metric-value up">{{ '%.3f'|format((r.best_sharpe or 0)|float) }}</span></p>
+                <p class="form-text">达标的参与者可领取最优公式。</p>
+                {% else %}
+                <p class="form-text">已截止但无达标者，托管金已退还发起人。</p>
+                {% endif %}
+            {% else %}
+            <p class="form-text">进行中，等待截止后汇总（发起人可手动汇总，或由系统定时自动汇总）。</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-actions">
+    {% if is_initiator %}
+        {% if r.status in ('recruiting', 'running') %}
+        <span class="form-text">你是发起人</span>
+        <form method="post" action="{{ url_for('.finalize', id=r.id) }}" class="inline-form">
+            <button class="btn btn-primary-custom" onclick="return confirm('确认立即汇总？将按达标人数发奖并退还托管金余额。')"><i class="bi bi-flag"></i> 立即汇总</button>
+        </form>
+        {% endif %}
+    {% else %}
+        {% if r.status in ('recruiting', 'running') %}
+        <form method="post" action="{{ url_for('.join', id=r.id) }}" class="inline-form">
+            <button class="btn btn-outline-custom"><i class="bi bi-person-plus"></i> 报名</button>
+        </form>
+        <form method="post" action="{{ url_for('.submit', id=r.id) }}" class="inline-form bid-form">
+            <label>选择提交公式</label>
+            <select name="formula_id" class="form-select" required>
+                <option value="">— 选择本地公式 —</option>
+                {% for f in my_formulas %}
+                <option value="{{ f.id }}">{{ f.stock_code }} · {{ f.ai_name or '未命名' }}（夏普 {{ '%.2f'|format((f.test_sharpe or 0)|float) }} · {{ f.source|source_label }}）</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary-custom"><i class="bi bi-send"></i> 提交结果</button>
+        </form>
+        {% if not my_formulas %}<span class="form-text">（没有可提交的公式：仅「自己训练/交易购买」来源可参与）</span>{% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if r.status == 'completed' and r.best_sharpe is not none %}
+    <form method="post" action="{{ url_for('.best', id=r.id) }}" class="inline-form">
+        <button class="btn btn-primary-custom"><i class="bi bi-download"></i> 领取最优公式</button>
+    </form>
+    {% endif %}
+
+    <a href="{{ url_for('.index') }}" class="btn btn-outline-custom"><i class="bi bi-arrow-left"></i> 返回接力列表</a>
+</div>
+{% endblock %}

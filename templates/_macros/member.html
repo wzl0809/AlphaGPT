@@ -1,0 +1,28 @@
+{# 服务与定制提示组件宏（原会员营销位，已转为「免费平台 + 软件定制/开发/维护服务」方向）。
+   使用：{% from "_macros/member.html" import upgrade_cta, lock_badge, upgrade_bar %} #}
+
+{# 联系开发者 CTA 卡片：标题 + 副标题 + 跳联系页按钮 #}
+{% macro upgrade_cta(text, sub='', btn='联系开发者 →', anchor='') %}
+<div class="member-cta">
+    <div class="member-cta-icon">📧</div>
+    <div class="member-cta-body">
+        <div class="member-cta-title">{{ text }}</div>
+        {% if sub %}<div class="member-cta-sub">{{ sub }}</div>{% endif %}
+    </div>
+    <a class="btn btn-primary-custom btn-sm" href="{{ url_for('donate.index') }}{{ anchor }}">{{ btn }}</a>
+</div>
+{% endmacro %}
+
+{# 锁徽章：标记扩展/定制能力（不再含「会员」字样） #}
+{% macro lock_badge(text='扩展') %}
+<span class="lock-badge"><i class="bi bi-lock"></i> {{ text }}</span>
+{% endmacro %}
+
+{# 行内联系提示条（表单/区块顶部） #}
+{% macro upgrade_bar(text, anchor='') %}
+<div class="member-upgrade-bar">
+    <i class="bi bi-stars"></i>
+    <span>{{ text }}</span>
+    <a href="{{ url_for('donate.index') }}{{ anchor }}">联系开发者 →</a>
+</div>
+{% endmacro %}

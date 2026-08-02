@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}公式详情 · {{ f.stock_code }}{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/train.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-file-earmark-bar-graph"></i> 公式详情</h2>
+    <p class="page-sub">
+        <span class="stock-code">{{ f.stock_code }}</span>
+        · 来源 <span class="src-badge src-{{ f.source }}">{{ f.source|source_label }}</span>
+    </p>
+</div>
+
+<div class="detail-grid">
+    {# ── 左列：基准图（缩小·点击放大）+ 公式 ── #}
+    <div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-image"></i> 基准图（样本外净值）
+                <span class="card-hint"><i class="bi bi-zoom-in"></i> 点击放大</span>
+            </div>
+            <div class="card-body">
+                {% if f.png_path %}
+                <img src="/reports-file?path={{ f.png_path }}" alt="基准图" class="benchmark-img thumb"
+                     onclick="openImgLightbox(this.src)">
+                {% else %}
+                <div class="empty-state small"><i class="bi bi-image"></i><span>无基准图</span></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card detail-sub-card">
+            <div class="card-header"><i class="bi bi-trophy"></i> 公式</div>
+            <div class="card-body">
+                {% if f.ai_name %}<div class="ai-name-big">{{ f.ai_name }}</div>{% endif %}
+                <div class="formula-display">{{ f.formula_str or '—' }}</div>
+                {% if f.factors %}<div class="form-text mt-2">因子：{{ f.factors }}</div>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ── 右列：核心指标 + 训练配置 + 硬件 ── #}
+    <div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> 核心指标</div>
+            <div class="card-body">
+                <div class="metric-grid">
+                    <div class="metric-card"><div class="metric-value {{ f.test_sharpe|sharpe_color }}">{{ '%.3f'|format(f.test_sharpe or 0) }}</div><div class="metric-label">夏普比率</div></div>
+                    <div class="metric-card"><div class="metric-value {{ 'up' if (f.ann_ret or 0) > 0 else 'down' }}">{{ f.ann_ret|pct if f.ann_ret is not none else '--' }}</div><div class="metric-label">年化收益</div></div>
+                    <div class="metric-card"><div class="metric-value down">{{ f.max_dd|pct if f.max_dd else '--' }}</div><div class="metric-label">最大回撤</div></div>
+                    <div class="metric-card"><div class="metric-value neutral">{{ f.win_rate|pct if f.win_rate is not none else '--' }}</div><div class="metric-label">胜率</div></div>
+                    <div class="metric-card"><div class="metric-value neutral">{{ '%.3f'|format(f.calmar or 0) }}</div><div class="metric-label">Calmar</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card detail-sub-card">
+            <div class="card-header"><i class="bi bi-gear"></i> 训练配置</div>
+            <div class="card-body">
+                <div class="kv-grid">
+                    <div><span class="kv-k">种子策略</span><span class="kv-v">{{ f.seed_strategy or '—' }} · {{ f.seed }}</span></div>
+                    <div><span class="kv-k">迭代次数</span><span class="kv-v">{{ (f.train_params or {}).get('train_iterations', '—') }}</span></div>
+                    <div><span class="kv-k">Batch</span><span class="kv-v">{{ (f.train_params or {}).get('batch_size', '—') }}</span></div>
+                    <div><span class="kv-k">寻优轮数</span><span class="kv-v">{{ (f.train_params or {}).get('auto_optimize_runs', '—') }}</span></div>
+                    <div><span class="kv-k">公式长度</span><span class="kv-v">{{ (f.train_params or {}).get('max_seq_len', '—') }}</span></div>
+                    <div><span class="kv-k">奖励偏好</span><span class="kv-v">{{ (f.train_params or {}).get('reward_profile', '—') }}</span></div>
+                    <div><span class="kv-k">训练耗时</span><span class="kv-v">{{ '%.0f'|format(f.train_duration_sec or 0) }} 秒</span></div>
+                    <div><span class="kv-k">训练日期</span><span class="kv-v">{{ f.trained_at|fmt_date }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card detail-sub-card">
+            <div class="card-header"><i class="bi bi-cpu"></i> 硬件</div>
+            <div class="card-body">
+                {% set hw = f.hardware_summary or {} %}
+                <div class="kv-grid">
+                    <div><span class="kv-k">CPU</span><span class="kv-v">{{ hw.get('cpu_model', '—') }} ({{ hw.get('cpu_cores','—') }} 核)</span></div>
+                    <div><span class="kv-k">内存</span><span class="kv-v">{{ hw.get('ram_gb','—') }} GB</span></div>
+                    <div><span class="kv-k">GPU</span><span class="kv-v">{{ hw.get('gpu_model', '—') }}</span></div>
+                    <div><span class="kv-k">显存</span><span class="kv-v">{{ hw.get('gpu_vram_gb','—') }} GB</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── 基准图放大浮层（点图打开，点遮罩/右上 × / Esc 关闭）── #}
+<div class="img-lightbox" id="imgLightbox" onclick="closeImgLightbox()">
+    <img id="imgLightboxImg" src="" alt="基准图放大">
+    <button type="button" class="lightbox-close" onclick="event.stopPropagation();closeImgLightbox()" title="关闭"><i class="bi bi-x-lg"></i></button>
+</div>
+
+<div class="detail-actions">
+    {% if is_locked %}
+    <span class="locked-banner"><i class="bi bi-lock"></i> 该公式已锁定（公式库已满，免费额度 {{ cap }} 个已用尽）。删除多余公式后可分享到策略贴板、加入量化信号。</span>
+    {% elif f.source == 'self' %}
+    <form method="post" action="{{ url_for('.sell', fid=f.id) }}" class="inline-form sell-inline">
+        <label>售价（建议 {{ f|suggest_price }}，0-1000；0=不上架）</label>
+        <input type="number" name="price" class="form-control" min="0" max="1000" step="10" value="{{ f|suggest_price }}" required>
+        <button class="btn btn-primary-custom" type="submit"><i class="bi bi-share-fill"></i> 分享到策略贴板</button>
+    </form>
+    {% else %}
+    <span class="form-text"><i class="bi bi-info-circle"></i> 该公式为「{{ f.source|source_label }}」来源，仅供自用，不可转售上架</span>
+    {% endif %}
+    {% if is_locked %}
+    <button class="btn btn-outline-custom" disabled><i class="bi bi-lock"></i> 加入量化信号（已锁定）</button>
+    {% elif in_quant %}
+    <button class="btn btn-outline-custom" disabled>✓ 已在量化跟踪</button>
+    {% else %}
+    <form method="post" action="{{ url_for('.to_quant', fid=f.id) }}" class="inline-form">
+        <button class="btn btn-outline-custom" onclick="return confirm('加入量化信号跟踪列表？')"><i class="bi bi-graph-up-arrow"></i> 加入量化信号</button>
+    </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('.delete', fid=f.id) }}" class="inline-form">
+        <button class="btn btn-danger-custom" onclick="return confirm('确认删除此公式？基准图文件保留。')"><i class="bi bi-trash"></i> 删除</button>
+    </form>
+    <a href="{{ url_for('.index') }}" class="btn btn-outline-custom"><i class="bi bi-arrow-left"></i> 返回公式库</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 基准图放大浮层：点缩略图打开，点遮罩 / 右上 × / Esc 关闭
+    function openImgLightbox(src) {
+        const lb = document.getElementById('imgLightbox');
+        document.getElementById('imgLightboxImg').src = src;
+        lb.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeImgLightbox() {
+        document.getElementById('imgLightbox').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImgLightbox(); });
+</script>
+{% endblock %}

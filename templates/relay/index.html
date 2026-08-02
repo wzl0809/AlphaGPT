@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}公式接力{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/formula_lib.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/bounty.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-people"></i> 公式接力</h2>
+    <p class="page-sub">共 {{ count }} 个接力 · 多算力共训取最高夏普 · 余额 <b>{{ '%.2f'|format((balance or 0)|float) }}</b> 算力
+        · <button class="btn btn-primary-custom btn-sm" onclick="openCreate()"><i class="bi bi-plus-lg"></i> 发起接力</button></p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if items %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>发起人</th>
+                        <th>达标夏普≥</th>
+                        <th>单人奖励</th>
+                        <th>上限人数</th>
+                        <th>参与数</th>
+                        <th>状态</th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in items %}
+                    <tr>
+                        <td>
+                            <div class="stock-cell">
+                                <span class="stock-code">{{ r.stock_code }}</span>
+                            </div>
+                        </td>
+                        <td><span class="seller-name">{{ (r.initiator or {}).username or '—' }}</span></td>
+                        <td>{{ (r.target_config or {}).min_sharpe if (r.target_config or {}).min_sharpe is not none else '—' }}</td>
+                        <td><span class="price-tag">{{ r.reward_per_participant }} 算力</span></td>
+                        <td>{{ r.max_participants or '—' }}</td>
+                        <td>{{ r.participants_count if r.participants_count is not none else 0 }}</td>
+                        <td><span class="src-badge src-{{ 'bought' if r.status in ('recruiting','running') else 'self' }}">{{ r.status }}</span></td>
+                        <td class="col-actions">
+                            <a href="{{ url_for('.detail', id=r.id) }}" class="icon-btn" title="查看/参与"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pages > 1 %}
+        <nav class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('.index', page=page-1) }}" class="page-btn">« 上一页</a>
+            {% endif %}
+            <span class="page-info">第 {{ page }} / {{ pages }} 页</span>
+            {% if page < pages %}
+                <a href="{{ url_for('.index', page=page+1) }}" class="page-btn">下一页 »</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>暂无接力</p>
+            <span>点击上方「发起接力」组织一次多算力共训</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── 发起弹窗 ── #}
+<div class="modal-mask" id="createModal">
+    <div class="modal-card">
+        <form method="post" action="{{ url_for('.create') }}" id="createForm">
+            <div class="modal-head"><i class="bi bi-people"></i> 发起接力（预扣托管金）</div>
+            <div class="modal-body">
+                <label class="form-label">标的代码</label>
+                <div class="filter-input stock-input-wrap" style="margin-bottom:.5rem;">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="stock_code" id="createStock" class="form-control stock-input"
+                           placeholder="代码" autocomplete="off" required>
+                    <input type="hidden" name="stock_name" id="createStockName">
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label">达标夏普 ≥</label>
+                        <input type="number" name="min_sharpe" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <div>
+                        <label class="form-label">单人奖励（算力）</label>
+                        <input type="number" name="reward_per_participant" class="form-control" step="1" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label">上限人数（=预扣份数）</label>
+                        <input type="number" name="max_participants" class="form-control" step="1" min="1" max="100" value="20">
+                    </div>
+                    <div>
+                        <label class="form-label">截止时间</label>
+                        <input type="datetime-local" name="deadline" class="form-control" required>
+                    </div>
+                </div>
+                <p class="form-text mt-2">算力门槛（可选，服务端硬校验）</p>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label">GPU 显存 ≥ (GB)</label>
+                        <input type="number" name="min_gpu_vram" class="form-control" step="1" min="0">
+                    </div>
+                    <div>
+                        <label class="form-label">CPU 核数 ≥</label>
+                        <input type="number" name="min_cpu_cores" class="form-control" step="1" min="0">
+                    </div>
+                </div>
+                <p class="form-text mt-2">发起时按 奖励×上限人数 预扣托管金；汇总后按实际达标人数发奖，剩余退还。</p>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-outline-custom" onclick="closeCreate()">取消</button>
+                <button type="submit" class="btn btn-primary-custom"><i class="bi bi-check2"></i> 确认发起</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openCreate() { document.getElementById('createModal').classList.add('show'); }
+    function closeCreate() { document.getElementById('createModal').classList.remove('show'); }
+    document.getElementById('createStock')?.addEventListener('stockselect', (e) => {
+        document.getElementById('createStockName').value = e.detail?.name || '';
+    });
+</script>
+<script src="{{ url_for('static', filename='js/formula_lib.js') }}"></script>
+{% endblock %}

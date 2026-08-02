@@ -1,0 +1,14 @@
+/* ============================================================================
+   bounty.css —— 算力悬赏（复用 formula_lib.css 组件，仅补页面专属）
+   ============================================================================ */
+
+.btn-sm { padding: 0.25rem 0.7rem; font-size: 0.82rem; }
+
+/* 弹窗/表单内的两列布局 */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.5rem; }
+@media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+/* 接单表单（选择器 + 提交按钮） */
+.bid-form { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.bid-form label { font-size: 0.85rem; color: var(--text-secondary); }
+.bid-form .form-select { min-width: 280px; }

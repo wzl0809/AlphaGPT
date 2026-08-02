@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}关于{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/about.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-info-circle"></i> 关于</h2>
+    <p class="page-sub">了解 AlphaGPT 的技术内核、科学方法与版本信息</p>
+</div>
+
+<div class="ab-wrap">
+
+    {# ── Hero ── #}
+    <section class="ab-hero">
+        <img class="ab-logo-img" src="{{ url_for('static', filename='logo.png') }}" alt="AlphaGPT" width="260" height="130">
+        <p class="ab-tagline">基于 <b>Transformer 神经网络 + PPO 强化学习</b>的量化因子自进化引擎。<br>
+           AI 自动挖掘可解释公式 · 样本外严格验证。</p>
+        <div class="ab-chips">
+            <span class="ab-chip ver"><i class="bi bi-git"></i> v{{ client_version }}{% if client_channel == 'preview' %} · 预览版{% elif client_channel and client_channel != 'stable' %} · {{ client_channel }}{% endif %}</span>
+        </div>
+        <div class="ab-hero-actions">
+            <button class="btn btn-primary-custom btn-sm" id="abCheck"><i class="bi bi-arrow-repeat"></i> 检查更新</button>
+            <a class="btn btn-outline-custom btn-sm" href="{{ url_for('help.index') }}"><i class="bi bi-book"></i> 查看帮助手册</a>
+        </div>
+    </section>
+
+    {# ── 核心数字 strip ── #}
+    <section>
+        <div class="ab-section-title"><i class="bi bi-clipboard-data"></i><h3>技术一览</h3></div>
+        <p class="ab-section-sub">用可量化的工程指标，定义一套严谨的量化研究平台</p>
+        <div class="ab-metrics">
+            <div class="ab-metric"><i class="bi bi-diagram-3 ab-m-icon"></i><div class="ab-m-num">19</div><div class="ab-m-label">内置量价因子<br>（5 大类）</div></div>
+            <div class="ab-metric"><i class="bi bi-calculator ab-m-icon"></i><div class="ab-m-num">12</div><div class="ab-m-label">公式算子<br>（torch.jit 加速）</div></div>
+            <div class="ab-metric"><i class="bi bi-sliders ab-m-icon"></i><div class="ab-m-num">30+</div><div class="ab-m-label">训练参数<br>环境变量零侵入</div></div>
+            <div class="ab-metric"><i class="bi bi-funnel ab-m-icon"></i><div class="ab-m-num">IC</div><div class="ab-m-label">Spearman 因子<br>显著性筛选</div></div>
+            <div class="ab-metric"><i class="bi bi-lightning-charge ab-m-icon"></i><div class="ab-m-num">55×</div><div class="ab-m-label">缓存提速<br>25.26s → 0.46s</div></div>
+            <div class="ab-metric"><i class="bi bi-robot ab-m-icon"></i><div class="ab-m-num">4 路</div><div class="ab-m-label">大模型智能路由<br>自动 failover</div></div>
+            <div class="ab-metric"><i class="bi bi-pie-chart ab-m-icon"></i><div class="ab-m-num">6:2:2</div><div class="ab-m-label">训练/验证/<br>样本外测试</div></div>
+            <div class="ab-metric"><i class="bi bi-shield-lock ab-m-icon"></i><div class="ab-m-num">Fernet</div><div class="ab-m-label">认证加密 +<br>Argon2 哈希</div></div>
+        </div>
+    </section>
+
+    {# ── 技术亮点 ── #}
+    <section>
+        <div class="ab-section-title"><i class="bi bi-stars"></i><h3>核心技术与先进性</h3></div>
+        <p class="ab-section-sub">五个维度的工程纵深，构成「科学、可信、安全、高效」的量化闭环</p>
+        <div class="ab-tech-grid">
+
+            <div class="ab-tech">
+                <div class="ab-tech-head">
+                    <div class="ab-tech-ico blue"><i class="bi bi-cpu"></i></div>
+                    <div><h4>Transformer + PPO 双引擎因子自进化</h4>
+                    <div class="ab-tech-sub">遗传编程 × 深度强化学习的混合范式</div></div>
+                </div>
+                <p>策略网络自回归生成波兰式数学公式，由 19 因子与 12 算子组合；经 GPU 并行解析与向量化回测后，用 PPO+GAE 近端优化迭代夏普与胜率。比传统遗传编程收敛更快，比纯神经网络更具可解释性。</p>
+                <div class="ab-tech-metrics">
+                    <span class="ab-tm">PPO clip=0.2</span>
+                    <span class="ab-tm">γ=0.99 λ=0.95</span>
+                    <span class="ab-tm">GAE 优势估计</span>
+                    <span class="ab-tm">torch.jit 编译</span>
+                </div>
+                <div class="ab-tech-sci"><i class="bi bi-check2-circle"></i><span><b>科学依据：</b>Transformer 学习公式语法，RL 提供搜索方向，两者优势互补。</span></div>
+            </div>
+
+            <div class="ab-tech">
+                <div class="ab-tech-head">
+                    <div class="ab-tech-ico purple"><i class="bi bi-robot"></i></div>
+                    <div><h4>四引擎 LLM 路由 + 六维防幻觉仪表盘</h4>
+                    <div class="ab-tech-sub">schema-as-prompt + 数据一致性硬约束</div></div>
+                </div>
+                <p>支持 DeepSeek / GLM / 通义 / OpenAI 兼容四路大模型智能路由，任一限流即无缝切换。输出经 Pydantic 结构化校验的六维研究仪表盘，叠加硬护栏（主力流出禁参与、获利盘&gt;85% 标抛压），从源头遏制 LLM 幻觉。</p>
+                <div class="ab-tech-metrics">
+                    <span class="ab-tm">自动 failover</span>
+                    <span class="ab-tm">指数退避重试</span>
+                    <span class="ab-tm">11+ 基本面字段</span>
+                    <span class="ab-tm">诚实降级标注</span>
+                </div>
+                <div class="ab-tech-sci"><i class="bi bi-check2-circle"></i><span><b>科学依据：</b>用真实行情/资金/筹码数据（而非 LLM 记忆）作硬约束过滤器，结论可复现可追溯。</span></div>
+            </div>
+
+            <div class="ab-tech" style="grid-column: 1 / -1;">
+                <div class="ab-tech-head">
+                    <div class="ab-tech-ico red"><i class="bi bi-shield-lock"></i></div>
+                    <div><h4>Fernet 认证加密 + Argon2 哈希纵深防御</h4>
+                    <div class="ab-tech-sub">从密钥到会话的全链路安全</div></div>
+                </div>
+                <p>API Key 与交易公式均经 Fernet 认证加密（AES-128-CBC + HMAC-SHA256，Encrypt-then-Mac）落盘，公式支持 MultiFernet 密钥热轮换。账户密码采用 Argon2 内存硬哈希抗 GPU 暴破；JWT 双令牌 + 黑名单实现改密即一键吊销全部设备会话，叠加登录递增退避、hashcash PoW 与 HSTS/Secure Cookie 安全头。</p>
+                <div class="ab-tech-metrics">
+                    <span class="ab-tm">Encrypt-then-MAC</span>
+                    <span class="ab-tm">MultiFernet 密钥轮换</span>
+                    <span class="ab-tm">Argon2 内存硬哈希</span>
+                    <span class="ab-tm">JWT 黑名单吊销</span>
+                    <span class="ab-tm">6 级登录退避</span>
+                    <span class="ab-tm">hashcash PoW</span>
+                </div>
+                <div class="ab-tech-sci"><i class="bi bi-check2-circle"></i><span><b>科学依据：</b>认证加密保证密文任一比特被篡改即被拒绝；内存硬哈希抗 ASIC/GPU 并行；密钥族设计杜绝单点泄露致存量密文可解。</span></div>
+            </div>
+
+        </div>
+    </section>
+
+    {# ── 科学严谨：流水线 ── #}
+    <section>
+        <div class="ab-section-title"><i class="bi bi-diagram-2"></i><h3>科学方法论</h3></div>
+        <p class="ab-section-sub">一条从因子到信号的严谨流水线，系统性杜绝过拟合</p>
+        <div class="ab-pipeline-card">
+            <div class="ab-pipeline">
+                <div class="ab-pipe-step"><div class="ab-pipe-ico"><i class="bi bi-funnel"></i></div><h5>因子筛选</h5><p>Spearman IC + t 值双重显著性门槛</p></div>
+                <div class="ab-pipe-step"><div class="ab-pipe-ico"><i class="bi bi-cpu"></i></div><h5>RL 训练</h5><p>Transformer 生成公式，PPO 优化</p></div>
+                <div class="ab-pipe-step"><div class="ab-pipe-ico"><i class="bi bi-clipboard2-check"></i></div><h5>样本外检验</h5><p>6:2:2 划分，20% 严格 OOS 评估</p></div>
+                <div class="ab-pipe-step"><div class="ab-pipe-ico"><i class="bi bi-shield-check"></i></div><h5>鲁棒性</h5><p>多种子寻优 + 高斯噪声扰动</p></div>
+                <div class="ab-pipe-step"><div class="ab-pipe-ico"><i class="bi bi-broadcast"></i></div><h5>诚实信号</h5><p>新鲜度守卫 + 命中率实盘校验</p></div>
+            </div>
+            <div class="ab-rigor">
+                <div class="ab-rigor-item">
+                    <div class="ab-ri-head"><i class="bi bi-graph-up"></i> 因子显著性</div>
+                    <p>|IC| ≥ 0.03 且 |t| ≥ 2（约 95% 置信）方纳入；剔除相关 &gt;0.7 的冗余因子，避免多重共线性。</p>
+                </div>
+                <div class="ab-rigor-item">
+                    <div class="ab-ri-head"><i class="bi bi-box-seam"></i> 样本外诚实</div>
+                    <p>test_sharpe 优先取 OOS 夏普，仅在取不到时回退训练期分数；训练期偏乐观，OOS 才贴近实盘。</p>
+                </div>
+                <div class="ab-rigor-item">
+                    <div class="ab-ri-head"><i class="bi bi-shield"></i> 鲁棒归一</div>
+                    <p>训练集口径 median/MAD 鲁棒归一化 + 高斯噪声扰动测试，过滤极端值与运气，留下稳健信号。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ── 版本与更新（保留原功能）── #}
+    <section class="ab-version-card">
+        <div class="card-header"><i class="bi bi-arrow-repeat"></i> 版本与更新</div>
+        <div class="card-body">
+            <div id="abStatus" style="font-size:.88rem;line-height:1.6">
+                <span style="color:var(--text-secondary)">正在检查更新…</span>
+            </div>
+            <div class="ab-version-row">
+                <button class="btn btn-primary-custom btn-sm" id="abCheck2"><i class="bi bi-arrow-repeat"></i> 立即检查更新</button>
+                <a class="btn btn-outline-custom btn-sm" id="abUpdate" href="{{ url_for('auth.update_center') }}" style="display:none">
+                    <i class="bi bi-cloud-arrow-down"></i> 前往更新中心
+                </a>
+                <span class="ab-chip" style="margin-left:auto"><i class="bi bi-info-circle"></i> 账号、算力、公式、训练记录在更新后全部保留</span>
+            </div>
+        </div>
+    </section>
+
+    {# ── 底部：免责 + 联系 ── #}
+    <section class="ab-foot-grid">
+        <div class="ab-disclaimer">
+            <div class="ab-d-head"><i class="bi bi-exclamation-triangle-fill"></i> 风险提示与免责声明</div>
+            <p>本页所有信号、强度与 AI 评分，均为基于神经网络与强化学习的量化模型对公开历史数据的算法回显。内容仅供量化方法的学习、复盘与研究，不代表未来走势，不构成任何投资建议、买卖指令或交易依据。仅用于数学量化方法的学习、研究，不能用于决策判断，市场有风险，投资需谨慎！</p>
+        </div>
+        <div class="ab-contact">
+            <div class="ab-c-head"><i class="bi bi-headset"></i> 联系开发者</div>
+            <div class="ab-contact-list">
+                <div class="ab-contact-item">
+                    <div class="ab-c-ico qq"><i class="bi bi-envelope"></i></div>
+                    <div class="ab-c-meta"><div class="ab-c-label">邮箱</div><div class="ab-c-val"><a href="mailto:wzl0809@gmail.com?subject=AlphaGPT 研究分享与功能协助">wzl0809@gmail.com</a></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="ab-copyright">
+        {{ app_name }} · 量化因子自进化引擎 · 客户端 v{{ client_version }}<br>
+        © {{ current_year if current_year else 2026 }} AlphaGPT. All rights reserved. · 科学量化 · 严谨可信
+    </div>
+
+</div>
+
+<script>
+(function () {
+    var statusEl = document.getElementById('abStatus');
+    var updateLink = document.getElementById('abUpdate');
+    var cv = {{ client_version | tojson }};
+    var latest0 = {{ (latest_release or {}) | tojson }};
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function render(d, stale) {
+        var suffix = stale ? '（上次检查结果，点右侧刷新）' : '';
+        if (d && d.code) {
+            statusEl.innerHTML = '<span style="color:var(--text-secondary)"><i class="bi bi-info-circle"></i> 检查更新失败，请稍后重试。' + suffix + '</span>';
+            updateLink.style.display = 'none';
+            return;
+        }
+        if (d && d.upgrade_required) {
+            statusEl.innerHTML = '<span style="color:#dc3545"><i class="bi bi-exclamation-triangle-fill"></i> 当前版本 v' + esc(cv) +
+                ' 过低，需要更新' + (d.latest_version ? ' 到 v' + esc(d.latest_version) : '') + '后才能继续使用。' + suffix + '</span>';
+            updateLink.style.display = '';
+        } else if (d && d.upgrade_available) {
+            statusEl.innerHTML = '<span style="color:#0a84ff"><i class="bi bi-stars"></i> 发现新版本 v' + esc(d.latest_version || '') +
+                '（当前 v' + esc(cv) + '），建议更新。' + suffix + '</span>';
+            updateLink.style.display = '';
+        } else if (d && d.latest_version) {
+            statusEl.innerHTML = '<span style="color:var(--accent-green)"><i class="bi bi-check-circle-fill"></i> 当前已是最新版本 v' + esc(cv) + '。' + suffix + '</span>';
+            updateLink.style.display = 'none';
+        } else {
+            statusEl.innerHTML = '<span style="color:var(--text-secondary)">暂未获取到版本信息，点右侧检查最新版本。</span>';
+            updateLink.style.display = 'none';
+        }
+    }
+
+    function check() {
+        setBtns(true);
+        fetch('{{ url_for("auth.release_info_proxy") }}', { cache: 'no-store' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { render(d, false); })
+            .catch(function () { statusEl.innerHTML = '<span style="color:var(--text-secondary)">检查更新失败，请稍后重试。</span>'; })
+            .finally(function () { setBtns(false); });
+    }
+    function setBtns(busy) {
+        var txt = busy ? '检查中…' : '检查更新';
+        var icon = busy ? 'bi-arrow-repeat' : 'bi-arrow-repeat';
+        ['abCheck', 'abCheck2'].forEach(function (id) {
+            var b = document.getElementById(id);
+            if (b) { b.disabled = busy; b.innerHTML = '<i class="bi ' + icon + '"></i> ' + (busy ? '检查中…' : (id === 'abCheck' ? '检查更新' : '立即检查更新')); }
+        });
+    }
+
+    if (latest0 && latest0.latest_version !== undefined) {
+        render(latest0, true);
+    } else {
+        statusEl.innerHTML = '<span style="color:var(--text-secondary)">点击右侧检查最新版本。</span>';
+    }
+    var b1 = document.getElementById('abCheck'); if (b1) b1.addEventListener('click', check);
+    var b2 = document.getElementById('abCheck2'); if (b2) b2.addEventListener('click', check);
+})();
+</script>
+{% endblock %}

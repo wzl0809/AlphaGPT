@@ -1,0 +1,147 @@
+{# 左：情绪（「刷新数据」按钮在 header 右上角）#}
+<div>
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-speedometer2"></i> 情绪
+            <span id="marketTs" class="market-ts">{% if market_updated %}更新于 {{ market_updated }}{% endif %}</span>
+            <button class="btn-refresh-mini market-refresh" type="button" title="刷新大盘数据"><i class="bi bi-arrow-clockwise"></i> 刷新数据</button>
+        </div>
+        <div class="card-body gauge-body">
+            {% if market_snapshot %}
+            {# SVG 半圆连续温度计: 0(左,偏弱) - 100(右,强势), 指针按 score 连续旋转 #}
+            <svg viewBox="0 0 200 120" class="gauge-svg">
+                <defs>
+                    <linearGradient id="gaugeGrad" x1="0" y1="1" x2="1" y2="1">
+                        <stop offset="0%" style="stop-color:var(--accent-green)"/>
+                        <stop offset="50%" style="stop-color:#f0ad4e"/>
+                        <stop offset="100%" style="stop-color:var(--accent-red)"/>
+                    </linearGradient>
+                </defs>
+                {# 半圆连续色带：绿(偏弱) → 黄(震荡) → 红(强势)，A股红涨绿跌，实色自然过渡 #}
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"/>
+                {# 指针(由 home.js 按 score 旋转 -90°..+90°) #}
+                <g id="gaugeNeedle" style="transform-origin:100px 100px;transition:transform 0.8s cubic-bezier(0.4,0,0.2,1);">
+                    <line x1="100" y1="100" x2="100" y2="32" stroke="var(--accent-blue)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="100" cy="100" r="6" fill="var(--accent-blue)"/>
+                </g>
+                <text x="16" y="114" fill="var(--accent-green)" font-size="10">偏弱</text>
+                <text x="92" y="18" fill="var(--text-secondary)" font-size="10">震荡</text>
+                <text x="162" y="114" fill="var(--accent-red)" font-size="10">强势</text>
+            </svg>
+            <div class="gauge-label" id="gaugeLabel" data-score="{{ market_snapshot.score }}" data-status="{{ market_snapshot.status }}">
+                <strong class="gauge-temp">{{ market_snapshot.temperature_label }}</strong>
+                <span class="gauge-score">{{ market_snapshot.score }}/100</span>
+            </div>
+            {# P4: 涨跌家数 + 涨跌停 + 成交额 表（数据已在 snapshot，代码渲染零幻觉）#}
+            {% if market_snapshot.up_count or market_snapshot.limit_up_count %}
+            <table class="gauge-table">
+              <tr><td>🔴 上涨 <b style="color:var(--accent-red)">{{ market_snapshot.up_count }}</b></td>
+                  <td>🟢 下跌 <b style="color:var(--accent-green)">{{ market_snapshot.down_count }}</b></td></tr>
+              {% set _eff = market_snapshot.breadth_effect %}
+              {% if _eff %}
+              <tr><td colspan="2"><small class="gauge-tag {% if _eff == '赚钱效应扩散' %}tag-up{% elif _eff == '亏钱效应较强' %}tag-down{% endif %}">{{ _eff }}</small></td></tr>
+              {% endif %}
+              <tr><td>涨停 <b style="color:var(--accent-red)">{{ market_snapshot.limit_up_count }}</b></td>
+                  <td>跌停 <b style="color:var(--accent-green)">{{ market_snapshot.limit_down_count }}</b></td></tr>
+              {% if market_snapshot.total_amount_yi %}
+              <tr><td colspan="2">两市成交额 <b>{{ market_snapshot.total_amount_yi|round(0) }}</b> 亿{% if market_snapshot.turnover_label %} <small class="gauge-tag {% if market_snapshot.turnover_label == '高活跃度' %}tag-active{% endif %}">({{ market_snapshot.turnover_label }})</small>{% endif %}</td></tr>
+              {% endif %}
+            </table>
+            {% endif %}
+            {# P4: 主要指数 emoji 表（index_table，代码渲染零幻觉）#}
+            {% if market_snapshot.index_table %}
+            <table class="gauge-table index-table">
+              {% for idx in market_snapshot.index_table %}
+              <tr><td>{% if idx.change_pct and idx.change_pct > 0 %}🔴{% elif idx.change_pct and idx.change_pct < 0 %}🟢{% else %}⚪{% endif %} {{ idx.name }}</td>
+                  <td>{{ idx.current if idx.current else '—' }}</td>
+                  <td>{% if idx.change_pct is not none %}<b style="color:{% if idx.change_pct > 0 %}var(--accent-red){% elif idx.change_pct < 0 %}var(--accent-green){% endif %}">{{ idx.change_pct|round(2) }}%</b>{% else %}—{% endif %}</td></tr>
+              {% endfor %}
+            </table>
+            {% endif %}
+            {# P4: 板块领涨/领跌（sector_rankings，akshare 东财 fail-open，可能无）#}
+            {% if market_snapshot.sector_rankings %}
+            {% set sr = market_snapshot.sector_rankings %}
+            <table class="gauge-table sector-table">
+              {% if sr.industry_top5 %}
+              <tr><td colspan="2"><small>🔥 行业领涨</small></td></tr>
+              {% for s in sr.industry_top5 %}<tr><td>{{ s.name }}</td><td><b style="color:var(--accent-red)">{{ s.change_pct|round(2) }}%</b></td></tr>{% endfor %}
+              {% endif %}
+              {% if sr.industry_bottom5 %}
+              <tr><td colspan="2"><small>📉 行业领跌</small></td></tr>
+              {% for s in sr.industry_bottom5 %}<tr><td>{{ s.name }}</td><td><b style="color:var(--accent-green)">{{ s.change_pct|round(2) }}%</b></td></tr>{% endfor %}
+              {% endif %}
+            </table>
+            {% endif %}
+            {% if market_snapshot.data_quality and market_snapshot.data_quality != 'ok' %}
+            <div class="gauge-warn">
+                <i class="bi bi-exclamation-triangle"></i>实时行情获取受限，图示仅为可用维度估算，请结合实盘核实。
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="ai-text">点右上角「刷新数据」加载实时行情。</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# 右：评述（刷新数据按钮）+ 市场新闻（评述下）#}
+<div>
+    {% if has_deepseek %}
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-robot"></i> 评述
+            <button class="btn-refresh-mini market-refresh" type="button" title="刷新大盘数据"><i class="bi bi-arrow-clockwise"></i> 刷新数据</button>
+        </div>
+        <div class="card-body">
+            {% if market_ds %}
+            <div class="ds-head">
+                <span class="ds-score">{{ market_ds.sentiment_score }}/100</span>
+            </div>
+            {% set dashboard = market_ds.dashboard or {} %}
+            {% set cc = dashboard.core_conclusion %}
+            {% set intel = dashboard.intelligence %}
+            {% if intel and intel.risk_alerts %}
+            <div class="ds-section"><strong>⚠️ 风险</strong>
+                <ul>{% for r in intel.risk_alerts %}<li>{{ r }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+            {% if intel and intel.positive_catalysts %}
+            <div class="ds-section"><strong>🟢 利好</strong>
+                <ul>{% for c in intel.positive_catalysts %}<li>{{ c }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+            {% if market_ds.analysis_summary %}<div class="ds-summary">{{ market_ds.analysis_summary }}</div>{% endif %}
+            {% else %}
+            <div class="ai-text">点右上角「刷新数据」生成 AI 评述（首次约 10-20s）。</div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card hint-card"><div class="card-body"><i class="bi bi-info-circle"></i> 配置 deepseek Key 后显示大盘 AI 评述（系统设置）</div></div>
+    {% endif %}
+
+    {# 市场新闻（评述下）#}
+    {% if has_tavily %}
+    <div class="card">
+        <div class="card-header"><i class="bi bi-newspaper"></i> 市场新闻</div>
+        <div class="card-body news-list">
+            {% if market_tv and market_tv.news %}
+            <div class="sent-bar"><span>新闻情绪：{% if sentiment and sentiment != '样本不足' %}{{ sentiment }}{% elif not sentiment %}读取中{% endif %}</span>
+                {% if market_tv.date %}<span class="news-date">{{ market_tv.date }}</span>{% endif %}
+            </div>
+            <ul class="tv-news">
+                {% for n in market_tv.news %}
+                <li><a href="{{ n.url }}" target="_blank" rel="noopener">{{ n.title or n.url }}</a></li>
+                {% endfor %}
+            </ul>
+            {% elif market_tv %}
+            <div class="ai-text small">暂无当日新闻（{{ market_tv.date or '今日' }}）</div>
+            {% else %}
+            <div class="ai-text">点「刷新数据」加载新闻（首次约 5-10s）。</div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card hint-card"><div class="card-body"><i class="bi bi-info-circle"></i> 配置 tavily Key 后显示市场新闻与情绪（系统设置）</div></div>
+    {% endif %}
+</div>

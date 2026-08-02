@@ -1,0 +1,202 @@
+{% extends "auth_base.html" %}
+{% block title %}登录{% endblock %}
+
+{# 登录页不要顶部 banner：auth_flash 置空（不渲染、也不在此消费），flash 改到下方表单内以小字呈现 #}
+{% block auth_flash %}{% endblock %}
+
+{# 删除旧的 robot 图标 + AlphaGPT 文字，改为左右两栏布局 #}
+{% block auth_brand %}{% endblock %}
+
+{# 登录框整体上移 + 表单内小字提示样式（替代原顶部 banner） #}
+{% block extra_head %}
+{# 登录页强制亮色主题（覆盖 auth_base anti-flicker 与用户偏好，仅本页；head 内执行无闪烁）#}
+<script>try{document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
+<style>
+    /* 左右两栏布局：logo 左、登录框右 */
+    body.auth-page {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(1.5rem, 3vw, 3rem);
+        padding: 2rem;
+    }
+    .auth-logo-side {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .auth-logo-side img {
+        width: 540px;
+        max-width: 100%;
+        height: auto;
+        opacity: .95;
+        filter: drop-shadow(0 8px 40px rgba(91,155,255,0.15));
+        margin-bottom: .3rem;
+    }
+    .auth-logo-side .brand-sub {
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-align: center;
+        max-width: 320px;
+        line-height: 1.6;
+        letter-spacing: .05em;
+        background: linear-gradient(135deg, #5b9bff, #8b5cf6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        opacity: .85;
+    }
+    body.auth-page .auth-wrap {
+        position: relative;
+        z-index: 1;
+        flex: 0 0 400px;
+        max-width: 400px;
+        margin: 0;
+    }
+    .auth-inline-flash { margin-top: .7rem; display: flex; flex-direction: column; gap: .3rem; text-align: center; }
+    .auth-inline-flash .iflash { font-size: .8rem; line-height: 1.4; }
+    .auth-inline-flash .iflash i { margin-right: .25rem; }
+    .auth-inline-flash .iflash-success { color: var(--accent-green); }
+    .auth-inline-flash .iflash-error   { color: var(--accent-red); }
+    .auth-inline-flash .iflash-info    { color: var(--accent-blue); }
+    .auth-inline-flash .iflash-warning { color: var(--accent-orange); }
+    /* 神经网络动态背景层 */
+    #neuralCanvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    body.auth-page .auth-wrap { position: relative; z-index: 1; }
+    .auth-theme-toggle { z-index: 3; }
+    /* 手机：上下堆叠，logo 缩小 */
+    @media (max-width: 768px) {
+        body.auth-page { flex-direction: column; gap: 1.5rem; padding-top: clamp(2rem, 8vh, 4rem); }
+        .auth-logo-side img { max-width: 160px; }
+        body.auth-page .auth-wrap { flex: 0 0 auto; width: 100%; max-width: 420px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<canvas id="neuralCanvas"></canvas>
+<div class="auth-logo-side">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="AlphaGPT">
+    <div class="brand-sub">基于神经网络与强化学习的量化因子挖掘与策略研究实验平台</div>
+</div>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-head">
+            <h3><i class="bi bi-shield-lock"></i> 登录</h3>
+        </div>
+        <form method="post" class="auth-form">
+            <label class="form-label">邮箱</label>
+            <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
+            <label class="form-label mt-3">密码</label>
+            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            <button type="submit" id="btnLogin" class="btn btn-primary-custom mt-4 w-100">
+                <i class="bi bi-box-arrow-in-right"></i> 登录
+            </button>
+            {# 小字提示：登录失败 / 注册成功 / 密码已重置 等（替代原顶部 banner，单次消费防串页） #}
+            {% set _msgs = get_flashed_messages(with_categories=true) %}
+            {% if _msgs %}
+            <div class="auth-inline-flash">
+                {% for cat, msg in _msgs %}
+                <span class="iflash iflash-{{ cat }}">
+                    <i class="bi {% if cat == 'success' %}bi-check-circle-fill{% elif cat == 'error' %}bi-x-circle-fill{% elif cat == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>{{ msg }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </form>
+        <div class="auth-foot">
+            <a href="{{ url_for('auth.register') }}">没有账号？去注册</a>
+            <span class="mx-2">·</span>
+            <a href="{{ url_for('auth.reset_password') }}">忘记密码？</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+    var lock = {{ lock_seconds | default(0) }};
+    var btn = document.getElementById('btnLogin');
+    if (lock > 0 && btn) {
+        var remain = lock, orig = btn.innerHTML;
+        btn.disabled = true;
+        (function tick() {
+            if (remain <= 0) { btn.disabled = false; btn.innerHTML = orig; return; }
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> ' + remain + 's';
+            remain--; setTimeout(tick, 1000);
+        })();
+    }
+})();
+</script>
+<script>
+/* 神经网络动态背景（移植自 111.html）：节点漂移 + 近距连线 + 鼠标排斥 */
+(function () {
+    var canvas = document.getElementById('neuralCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var width, height;
+    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var mouse = { x: null, y: null };
+    window.addEventListener('mousemove', function (e) { mouse.x = e.x; mouse.y = e.y; });
+    window.addEventListener('mouseout', function () { mouse.x = null; mouse.y = null; });
+
+    var particleCount = 80, particles = [];
+    class Particle {
+        constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 1.5;
+            this.vy = (Math.random() - 0.5) * 1.5;
+            this.radius = Math.random() * 2 + 1;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > width) this.vx = -this.vx;
+            if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            if (mouse.x !== null && mouse.y !== null) {
+                var dx = this.x - mouse.x, dy = this.y - mouse.y;
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 150) {
+                    var force = (150 - distance) / 150;
+                    this.x += (dx / distance) * force * 5;
+                    this.y += (dy / distance) * force * 5;
+                }
+            }
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#5b9bff';
+            ctx.fill();
+        }
+    }
+    for (var i = 0; i < particleCount; i++) particles.push(new Particle());
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        for (var i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); }
+        for (var i = 0; i < particles.length; i++) {
+            for (var j = i + 1; j < particles.length; j++) {
+                var p1 = particles[i], p2 = particles[j];
+                var dist = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+                if (dist < 120) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.strokeStyle = 'rgba(91, 155, 255, ' + (1 - dist / 120) + ')';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
+</script>
+{% endblock %}

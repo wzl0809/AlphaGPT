@@ -1,0 +1,183 @@
+/* ============================================================================
+   about.css —— 关于页（技术优越性 / 先进性 / 科学性）
+   复用 base.css 的 CSS token，所有页面级类加 .ab- 前缀避免冲突
+   ============================================================================ */
+
+/* ── 页面容器 ── */
+.ab-wrap { max-width: 1080px; margin: 0 auto; }
+.ab-wrap > * + * { margin-top: 1.6rem; }
+
+/* ── Hero ── */
+.ab-hero {
+    position: relative; overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 2.6rem 2rem 2.2rem;
+    text-align: center;
+}
+/* 渐变光晕背景（暗亮自适应） */
+.ab-hero::before {
+    content: ""; position: absolute; inset: -40% -10% auto -10%; height: 320px;
+    background:
+        radial-gradient(420px 220px at 30% 20%, rgba(59,130,246,0.20), transparent 70%),
+        radial-gradient(420px 220px at 70% 10%, rgba(16,185,129,0.18), transparent 70%),
+        radial-gradient(380px 200px at 50% 0%, rgba(139,92,246,0.16), transparent 70%);
+    filter: blur(8px); pointer-events: none;
+}
+[data-theme="dark"] .ab-hero::before { opacity: 0.7; }
+
+.ab-logo-img {
+    position: relative; z-index: 1;
+    width: 260px; height: auto;
+    margin: 0 auto 1.2rem;
+    display: block;
+    border-radius: 16px;
+    background: #fff;                 /* logo 自带白底；统一为白色铭板，暗色主题下不显突兀白矩形 */
+    padding: 10px 18px;
+    box-shadow: 0 10px 28px rgba(59,130,246,0.20);
+}
+@media (max-width: 480px) { .ab-hero .ab-logo-img { width: 200px; padding: 8px 14px; } }
+
+.ab-hero h1 {
+    position: relative; z-index: 1;
+    font-size: 2.4rem; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(120deg, var(--accent-blue), var(--accent-green) 60%, var(--accent-purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 0.4rem;
+}
+.ab-hero .ab-tagline { position: relative; z-index: 1; color: var(--text-secondary); font-size: 1rem; max-width: 620px; margin: 0 auto 1.2rem; line-height: 1.6; }
+.ab-chips { position: relative; z-index: 1; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+.ab-chip {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    background: var(--bg-param-group); border: 1px solid var(--border-color); color: var(--text-primary);
+}
+.ab-chip i { font-size: 0.85rem; }
+.ab-chip.ver { color: var(--accent-blue); border-color: rgba(59,130,246,0.35); background: rgba(59,130,246,0.08); }
+.ab-chip.preview { color: var(--accent-orange); border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); }
+.ab-chip.science { color: var(--accent-green); border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.08); }
+
+.ab-hero-actions { position: relative; z-index: 1; display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; margin-top: 1.3rem; }
+
+/* ── 区块标题 ── */
+.ab-section-title { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+.ab-section-title h3 { font-size: 1.15rem; font-weight: 700; }
+.ab-section-title i { color: var(--accent-blue); font-size: 1.2rem; }
+.ab-section-sub { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; }
+
+/* ── 核心数字 strip ── */
+.ab-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; }
+.ab-metric {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); padding: 1rem 0.9rem; text-align: center;
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    position: relative; overflow: hidden;
+}
+.ab-metric:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: rgba(59,130,246,0.4); }
+.ab-metric .ab-m-num {
+    font-size: 1.7rem; font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.ab-metric .ab-m-label { font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.3rem; line-height: 1.4; }
+.ab-metric .ab-m-icon { position: absolute; top: 8px; right: 10px; font-size: 1rem; color: var(--text-secondary); opacity: 0.35; }
+@media (max-width: 760px) { .ab-metrics { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── 技术亮点卡 ── */
+.ab-tech-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+@media (max-width: 860px) { .ab-tech-grid { grid-template-columns: 1fr; } }
+.ab-tech {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); padding: 1.2rem 1.25rem;
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    position: relative;
+}
+.ab-tech:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: rgba(59,130,246,0.4); }
+.ab-tech-head { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.7rem; }
+.ab-tech-ico {
+    flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #fff;
+}
+.ab-tech-ico.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.ab-tech-ico.green { background: linear-gradient(135deg, #10b981, #059669); }
+.ab-tech-ico.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.ab-tech-ico.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.ab-tech-ico.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.ab-tech h4 { font-size: 1.02rem; font-weight: 700; line-height: 1.35; }
+.ab-tech .ab-tech-sub { font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.15rem; }
+.ab-tech p { font-size: 0.85rem; line-height: 1.65; color: var(--text-primary); }
+.ab-tech-metrics { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+.ab-tech-metrics .ab-tm {
+    font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 10px;
+    background: var(--bg-param-group); border: 1px solid var(--border-color); color: var(--text-secondary);
+}
+.ab-tech-sci {
+    margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);
+    display: flex; align-items: flex-start; gap: 0.45rem; font-size: 0.76rem; line-height: 1.55; color: var(--text-secondary);
+}
+.ab-tech-sci i { color: var(--accent-green); flex-shrink: 0; margin-top: 1px; }
+.ab-tech-sci b { color: var(--accent-green); font-weight: 600; }
+
+/* ── 科学严谨：流水线 ── */
+.ab-pipeline-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.4rem 1.25rem; }
+.ab-pipeline { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 0.4rem; }
+.ab-pipe-step {
+    flex: 1; min-width: 130px; text-align: center; position: relative; padding: 0 0.5rem;
+}
+.ab-pipe-step:not(:last-child)::after {
+    content: "\F285"; font-family: "bootstrap-icons"; font-weight: normal; font-style: normal;
+    position: absolute; right: -10px; top: 22px; color: var(--accent-blue); opacity: 0.5; font-size: 1.1rem;
+}
+.ab-pipe-ico {
+    width: 48px; height: 48px; margin: 0 auto 0.5rem; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.14), rgba(16,185,129,0.10));
+    border: 1px solid rgba(59,130,246,0.25);
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--accent-blue);
+}
+.ab-pipe-step h5 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
+.ab-pipe-step p { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.45; }
+.ab-rigor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-top: 1.2rem; }
+@media (max-width: 760px) { .ab-rigor { grid-template-columns: 1fr; } }
+.ab-rigor-item { background: var(--bg-param-group); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.85rem 0.9rem; }
+.ab-rigor-item .ab-ri-head { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem; }
+.ab-rigor-item .ab-ri-head i { color: var(--accent-green); }
+.ab-rigor-item p { font-size: 0.77rem; color: var(--text-secondary); line-height: 1.55; }
+
+/* ── 版本与更新（保留原功能）── */
+.ab-version-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.ab-version-card .card-header { background: var(--bg-card-header); }
+.ab-version-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-top: 0.8rem; }
+
+/* ── 底部双栏：免责 + 联系 ── */
+.ab-foot-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1rem; }
+@media (max-width: 760px) { .ab-foot-grid { grid-template-columns: 1fr; } }
+.ab-disclaimer {
+    background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: var(--radius-md); padding: 1.1rem 1.2rem;
+}
+.ab-disclaimer .ab-d-head { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; color: var(--accent-orange); margin-bottom: 0.4rem; }
+.ab-disclaimer p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.65; }
+.ab-contact {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); padding: 1.1rem 1.2rem;
+}
+.ab-contact .ab-c-head { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; margin-bottom: 0.7rem; }
+.ab-contact .ab-c-head i { color: var(--accent-blue); }
+.ab-contact-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.ab-contact-item {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.6rem 0.8rem; border-radius: var(--radius-sm);
+    background: var(--bg-param-group); border: 1px solid var(--border-color);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.ab-contact-item:hover { transform: translateX(2px); box-shadow: var(--hover-shadow); }
+.ab-contact-item .ab-c-ico { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.05rem; flex-shrink: 0; }
+.ab-c-ico.qq { background: linear-gradient(135deg, #12b7f5, #0e8fd6); }
+.ab-c-ico.wx { background: linear-gradient(135deg, #07c160, #09b357); }
+.ab-contact-item .ab-c-meta { line-height: 1.3; }
+.ab-contact-item .ab-c-label { font-size: 0.72rem; color: var(--text-secondary); }
+.ab-contact-item .ab-c-val { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.5px; }
+
+.ab-copyright { text-align: center; color: var(--text-secondary); font-size: 0.78rem; padding: 0.5rem 0 0.5rem; line-height: 1.6; }

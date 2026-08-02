@@ -1,0 +1,142 @@
+/* ============================================================================
+   train.css —— 训练系统页专用样式（进度/日志/参数折叠/公式/指标/结果分类）
+   ============================================================================ */
+
+.train-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 1100px) { .train-layout { grid-template-columns: 1fr; } }
+
+/* 参数分组（折叠） */
+.param-group {
+    background: var(--bg-param-group); border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+.param-group .pg-head {
+    color: var(--accent-blue); font-size: 0.88rem; font-weight: 600; margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;
+}
+.param-group .pg-head .bi-chevron-down { margin-left: auto; transition: transform 0.2s; }
+.param-group.collapsed .pg-body { display: none; }
+.param-group.collapsed .pg-head .bi-chevron-down { transform: rotate(-90deg); }
+.pg-body { animation: fadeIn 0.2s var(--ease-smooth); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ⓘ 悬停 */
+.info-tip { color: var(--text-secondary); cursor: help; font-size: 0.85rem; margin-left: 0.3rem; }
+.info-tip:hover { color: var(--accent-blue); }
+
+/* 进度条 */
+.progress-custom {
+    height: 26px; background: var(--bg-param-group); border-radius: 13px; overflow: hidden;
+    border: 1px solid var(--border-color); position: relative; transition: background 0.3s;
+}
+.progress-custom .progress-bar {
+    height: 100%; font-size: 0.8rem; line-height: 26px; font-weight: 600;
+    transition: width 0.3s ease; position: relative; overflow: hidden; border-radius: 13px;
+    color: #fff; padding-left: 0.6rem; white-space: nowrap;
+}
+.progress-custom .progress-bar.active-animate::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 48%,
+                rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.25) 52%, transparent 70%);
+    background-size: 200% 100%; animation: shimmerMove 1.2s ease-in-out infinite; pointer-events: none;
+}
+.progress-custom .progress-bar.pct-early { background: linear-gradient(90deg, var(--accent-blue), #60a5fa); }
+.progress-custom .progress-bar.pct-mid { background: linear-gradient(90deg, var(--accent-blue), var(--accent-green)); }
+.progress-custom .progress-bar.pct-late { background: linear-gradient(90deg, var(--accent-green), #34d399); }
+.progress-custom .progress-bar.pct-done { background: linear-gradient(90deg, var(--accent-green), #059669); }
+@keyframes shimmerMove { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.train-spinner { display: inline-block; animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 日志框 */
+.log-container {
+    background: var(--bg-log); border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    padding: 0.85rem; height: 340px; overflow-y: auto;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.8rem; line-height: 1.6; transition: background 0.3s;
+}
+.log-line { color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; padding: 1px 0; }
+.log-line.success, .log-line.info { color: var(--accent-blue); }
+.log-line.highlight { color: var(--accent-purple); font-weight: 600; }
+.log-line.warning { color: var(--accent-orange); }
+.log-line.error { color: var(--accent-red); }
+
+/* 状态点 */
+.status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.status-dot.idle { background: var(--text-secondary); }
+.status-dot.running { background: var(--accent-green); animation: pulse 1.5s infinite; }
+.status-dot.starting { background: var(--accent-blue); animation: pulse 1.5s infinite; }
+.status-dot.error { background: var(--accent-red); }
+.status-dot.stopped { background: var(--accent-orange); }
+.status-dot.completed { background: var(--accent-green); }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+
+/* 公式展示 */
+.formula-display {
+    background: var(--bg-param-group); border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem; font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.92rem; color: var(--accent-purple); word-break: break-all; transition: background 0.3s;
+}
+
+/* 指标卡网格 */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem; }
+.metric-card {
+    background: var(--bg-metric); border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem; text-align: center; transition: background 0.3s;
+}
+.metric-card .metric-value { font-size: 1.5rem; font-weight: 700; }
+.metric-card .metric-label { font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px; }
+
+/* 结果分类卡 */
+.result-card {
+    border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid var(--border-color);
+    background: var(--bg-card); box-shadow: var(--shadow); display: none;
+}
+.result-card.show { display: block; animation: slideUp 0.3s var(--ease-smooth); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.result-badge {
+    display: inline-block; padding: 0.3rem 0.9rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+.result-badge.bad { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+.result-badge.normal { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+.result-badge.premium { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+
+/* 控制按钮组 */
+.train-controls { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+/* 基准图 */
+.chart-box { text-align: center; }
+.chart-box img { max-width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+
+/* 种子展示（右侧只读态，与手动种子输入框等高，二者依策略 D 切换显隐） */
+.seed-display {
+    display: block; box-sizing: border-box; width: 100%;
+    padding: 0.375rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    background: var(--bg-param-group); color: var(--accent-purple);
+    font-weight: 600; font-size: 0.95rem; line-height: 1.5;
+}
+
+/* ── 硬件监控（训练控制处）：图标与百分比略微放大，图标彩色 ── */
+.hw-stats { font-size: 0.92rem; }
+.hw-stats i { font-size: 1.15rem; margin-right: 0.15rem; }
+.hw-stats .bi-cpu { color: var(--accent-blue); }
+.hw-stats .bi-memory { color: var(--accent-purple); }
+.hw-stats .bi-gpu-card { color: var(--accent-green); }
+.hw-stats .bi-hdd-stack { color: var(--accent-orange); }
+
+/* ── 参数 ⓘ 提示：量化页同款 .help-tip 观感（深色底白字、悬停即显）。
+   但 param-scroll 有 overflow 裁剪，CSS ::after 会被切到不可读 → 在 param-card 内禁用，
+   改由 train.js 渲染 body 级浮层（.tip-pop）逃出 overflow；其余页面的 .help-tip 不受影响。── */
+.param-card .help-tip::after { display: none; }
+.tip-pop {
+    position: fixed; z-index: 9999; max-width: 280px;
+    background: #1f2937; color: #fff; padding: 0.55rem 0.75rem;
+    border-radius: 6px; font-size: 0.76rem; line-height: 1.5;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.32);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+.tip-pop.show { opacity: 1; visibility: visible; }

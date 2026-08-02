@@ -1,0 +1,335 @@
+{% extends "auth_base.html" %}
+{% block title %}注册{% endblock %}
+
+{% block auth_flash %}{% endblock %}
+{% block auth_brand %}{% endblock %}
+
+{% block extra_head %}
+<script>try{document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
+<style>
+    body.auth-page {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(1.5rem, 3vw, 3rem);
+        padding: 2rem;
+    }
+    .auth-logo-side {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .auth-logo-side img {
+        width: 540px; max-width: 100%; height: auto; opacity: .95;
+        filter: drop-shadow(0 8px 40px rgba(91,155,255,0.15));
+        margin-bottom: .3rem;
+    }
+    .auth-logo-side .brand-sub {
+        font-size: 1.05rem; font-weight: 600; text-align: center;
+        max-width: 320px; line-height: 1.6; letter-spacing: .05em;
+        background: linear-gradient(135deg, #5b9bff, #8b5cf6);
+        -webkit-background-clip: text; background-clip: text; color: transparent; opacity: .85;
+    }
+    body.auth-page .auth-wrap {
+        position: relative; z-index: 1;
+        flex: 0 0 460px; max-width: 460px; margin: 0;
+    }
+    #neuralCanvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    body.auth-page .auth-wrap { position: relative; z-index: 1; }
+    .auth-theme-toggle { z-index: 3; }
+    .auth-form .auth-field { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.75rem; }
+    .auth-form .auth-field > .form-label { margin: 0; min-width: 3.4em; flex-shrink: 0; text-align: right; }
+    .auth-form .auth-field > .d-flex,
+    .auth-form .auth-field > .form-control { flex: 1; min-width: 0; }
+    @media (max-width: 768px) {
+        body.auth-page { flex-direction: column; gap: 1.5rem; padding-top: clamp(2rem, 8vh, 4rem); }
+        .auth-logo-side img { max-width: 160px; }
+        body.auth-page .auth-wrap { flex: 0 0 auto; width: 100%; max-width: 460px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<canvas id="neuralCanvas"></canvas>
+<div class="auth-logo-side">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="AlphaGPT">
+    <div class="brand-sub">基于神经网络与强化学习的量化因子挖掘与策略研究实验平台</div>
+</div>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-head">
+            <h3><i class="bi bi-person-plus"></i> 注册</h3>
+        </div>
+        <form method="post" class="auth-form" id="registerForm">
+            <input type="hidden" name="email_mode" id="email_mode" value="select">
+            <div class="auth-field">
+                <label class="form-label">邮箱</label>
+                <div class="d-flex gap-2">
+                    <input type="text" name="email_local" id="email_local" class="form-control" placeholder="邮箱名" required>
+                    <select name="email_domain" id="email_domain" class="form-select" style="max-width:55%">
+                        {% for group, domains in reg_info.groups.items() %}
+                        <optgroup label="{{ group }}">
+                            {% for d in domains %}
+                            <option value="{{ d }}">@{{ d }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endfor %}
+                        <option value="__other__">其他（手输完整邮箱）</option>
+                    </select>
+                </div>
+            </div>
+            <div id="otherWrap" style="display:none" class="mt-2">
+                <input type="text" name="email_full" id="email_full" class="form-control" placeholder="完整邮箱，如 name@protonmail.com">
+            </div>
+            <button type="button" id="btnSendCode" class="btn btn-outline-custom mt-3 w-100">
+                <i class="bi bi-envelope"></i> 发送验证码
+            </button>
+            <div id="sendMsg" class="form-text mt-2">验证码将发送至邮箱。</div>
+            <div class="auth-field">
+                <label class="form-label">验证码</label>
+                <input type="text" name="code" class="form-control" placeholder="6 位验证码">
+            </div>
+            <div class="auth-field">
+                <label class="form-label">用户名</label>
+                <input type="text" name="username" id="regUsername" class="form-control"
+                       placeholder="昵称" minlength="2" maxlength="64" autocomplete="username">
+            </div>
+            <div id="usernameCheck" class="username-check"></div>
+            <div class="auth-field">
+                <label class="form-label">密码</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••">
+            </div>
+            <label class="mt-3" style="display:flex;align-items:flex-start;gap:.5rem;font-size:.82rem;line-height:1.5;cursor:pointer">
+                <input type="checkbox" name="agree" id="agreeTerms" value="1" required style="margin-top:.2rem;flex-shrink:0">
+                <span>我已阅读并同意 <a href="{{ url_for('auth.agreement') }}" target="_blank" rel="noopener">《用户协议与免责声明》</a>（含<b>不构成投资建议、自负盈亏</b>等全部条款）</span>
+            </label>
+            <button type="submit" name="confirm" value="1" class="btn btn-primary-custom mt-4 w-100">
+                <i class="bi bi-check2-circle"></i> 确认注册
+            </button>
+        </form>
+        <div class="auth-foot">
+            <a href="{{ url_for('auth.login') }}">已有账号？去登录</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+    var GROUPS = {{ reg_info.groups | tojson | safe }};
+    var allowed = new Set();
+    Object.keys(GROUPS).forEach(function (g) {
+        (GROUPS[g] || []).forEach(function (d) { allowed.add(String(d).toLowerCase()); });
+    });
+    var mode = document.getElementById('email_mode');
+    var sel = document.getElementById('email_domain');
+    var local = document.getElementById('email_local');
+    var otherWrap = document.getElementById('otherWrap');
+    var full = document.getElementById('email_full');
+    var form = document.getElementById('registerForm');
+    function isOther() { return sel.value === '__other__'; }
+    sel.addEventListener('change', function () {
+        if (isOther()) {
+            mode.value = 'other'; otherWrap.style.display = '';
+            local.required = false; full.required = true;
+        } else {
+            mode.value = 'select'; otherWrap.style.display = 'none';
+            local.required = true; full.required = false;
+        }
+    });
+    function currentEmail() {
+        if (isOther()) return (full.value || '').trim();
+        var l = (local.value || '').trim();
+        return l ? l + '@' + sel.value : '';
+    }
+    function domainOf(email) {
+        email = (email || '').trim().toLowerCase();
+        var i = email.lastIndexOf('@');
+        return i >= 0 ? email.slice(i + 1) : '';
+    }
+    var btnSend = document.getElementById('btnSendCode');
+    var sendMsg = document.getElementById('sendMsg');
+    var sendUrl = {{ url_for('auth.register_send_code') | tojson | safe }};
+    var _CD = 600, _LS_KEY = 'regSendTs';
+    function setMsg(html, kind) {
+        sendMsg.innerHTML = html;
+        sendMsg.style.color = kind === 'bad' ? 'var(--accent-red)'
+            : (kind === 'ok' ? 'var(--accent-green)' : 'var(--text-secondary)');
+    }
+    function _tick(btn, remain, doneLabel) {
+        if (remain <= 0) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-envelope"></i> ' + doneLabel; return; }
+        var m = Math.floor(remain / 60), s = remain % 60;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> ' + m + ':' + (s < 10 ? '0' : '') + s;
+        setTimeout(function () { _tick(btn, remain - 1, doneLabel); }, 1000);
+    }
+    function startCooldown() {
+        btnSend.disabled = true;
+        try { localStorage.setItem(_LS_KEY, String(Date.now())); } catch (e) {}
+        _tick(btnSend, _CD, '重新发送');
+    }
+    (function () {
+        var ts = 0; try { ts = parseInt(localStorage.getItem(_LS_KEY) || '0', 10); } catch (e) {}
+        var elapsed = (Date.now() - ts) / 1000;
+        if (ts && elapsed < _CD) { btnSend.disabled = true; _tick(btnSend, _CD - Math.floor(elapsed), '重新发送'); }
+    })();
+    function _hex(buf) {
+        var b = new Uint8Array(buf), s = '';
+        for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? '0' : '') + b[i].toString(16);
+        return s;
+    }
+    async function solvePow(ch) {
+        var N = ch.difficulty, pre = ''; for (var i = 0; i < N; i++) pre += '0';
+        var enc = new TextEncoder();
+        setMsg('<i class="bi bi-shield-check"></i> 正在验证，约 1 秒…', '');
+        for (var nonce = 0; nonce < 5000000; nonce++) {
+            var buf = await crypto.subtle.digest('SHA-256', enc.encode(ch.salt + ':' + nonce));
+            if (_hex(buf).substring(0, N) === pre) {
+                return { salt: ch.salt, difficulty: N, exp: ch.exp, sig: ch.sig, nonce: nonce };
+            }
+        }
+        return null;
+    }
+    btnSend.addEventListener('click', async function () {
+        if (btnSend.disabled) return;
+        var email = currentEmail();
+        if (!email) { setMsg('请先填写邮箱', 'bad'); return; }
+        if (!allowed.has(domainOf(email))) { setMsg('该邮箱域名暂不支持', 'bad'); return; }
+        btnSend.disabled = true;
+        var pow = null;
+        try {
+            for (var attempt = 0; attempt < 2; attempt++) {
+                var payload = { email: email };
+                if (pow) payload.pow = pow;
+                var r = await fetch(sendUrl, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload), credentials: 'same-origin'
+                });
+                var d = await r.json();
+                if (d.pow_required && !pow) {
+                    pow = await solvePow(d.challenge);
+                    if (!pow) { setMsg('验证失败，请重试', 'bad'); btnSend.disabled = false; return; }
+                    continue;
+                }
+                setMsg(d.detail || (r.ok ? '验证码已发送' : '发送失败，请重试'), r.ok ? 'ok' : 'bad');
+                if (r.ok && !d.pow_required) startCooldown();
+                else btnSend.disabled = false;
+                return;
+            }
+        } catch (e) {
+            setMsg('网络异常，请重试', 'bad'); btnSend.disabled = false;
+        }
+    });
+    form.addEventListener('submit', function (e) {
+        var agree = document.getElementById('agreeTerms');
+        if (agree && !agree.checked) {
+            e.preventDefault();
+            alert('请先阅读并同意《用户协议与免责声明》');
+            agree.focus();
+            return;
+        }
+        var email = currentEmail();
+        if (!email) { return; }
+        var dom = domainOf(email);
+        if (!allowed.has(dom)) {
+            e.preventDefault();
+            alert('该邮箱域名（@' + dom + '）暂不支持。请选择常用域名，或使用 QQ/网易/Gmail/Outlook 等主流邮箱。');
+        }
+    });
+    var unameInput = document.getElementById('regUsername');
+    var unameCheck = document.getElementById('usernameCheck');
+    var _unameTimer = null;
+    var _checkUrl = {{ url_for('auth.check_username') | tojson | safe }};
+    function _renderUnameCheck(state, html) {
+        if (!state) { unameCheck.className = 'username-check'; unameCheck.innerHTML = ''; return; }
+        unameCheck.className = 'username-check ' + state;
+        unameCheck.innerHTML = html;
+    }
+    unameInput.addEventListener('input', function () {
+        var v = unameInput.value.trim();
+        if (_unameTimer) { clearTimeout(_unameTimer); _unameTimer = null; }
+        if (!v) { _renderUnameCheck(null); return; }
+        if (v.length < 2) { _renderUnameCheck('bad', '<i class="bi bi-info-circle"></i> 昵称至少 2 个字符'); return; }
+        _renderUnameCheck('busy', '<i class="bi bi-arrow-repeat"></i> 检测中…');
+        _unameTimer = setTimeout(function () {
+            fetch(_checkUrl + '?username=' + encodeURIComponent(v), { credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.available === true) {
+                        _renderUnameCheck('ok', '<i class="bi bi-check-circle-fill"></i> 昵称可用');
+                    } else if (d.available === false) {
+                        _renderUnameCheck('bad', '<i class="bi bi-x-circle-fill"></i> ' + (d.message || '该昵称已被占用'));
+                    } else {
+                        _renderUnameCheck(null);
+                    }
+                })
+                .catch(function () { _renderUnameCheck(null); });
+        }, 450);
+    });
+})();
+</script>
+<script>
+(function () {
+    var canvas = document.getElementById('neuralCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var width, height;
+    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+    var mouse = { x: null, y: null };
+    window.addEventListener('mousemove', function (e) { mouse.x = e.x; mouse.y = e.y; });
+    window.addEventListener('mouseout', function () { mouse.x = null; mouse.y = null; });
+    var particleCount = 80, particles = [];
+    class Particle {
+        constructor() {
+            this.x = Math.random() * width; this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 1.5; this.vy = (Math.random() - 0.5) * 1.5;
+            this.radius = Math.random() * 2 + 1;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > width) this.vx = -this.vx;
+            if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            if (mouse.x !== null && mouse.y !== null) {
+                var dx = this.x - mouse.x, dy = this.y - mouse.y;
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 150) {
+                    var force = (150 - distance) / 150;
+                    this.x += (dx / distance) * force * 5;
+                    this.y += (dy / distance) * force * 5;
+                }
+            }
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#5b9bff';
+            ctx.fill();
+        }
+    }
+    for (var i = 0; i < particleCount; i++) particles.push(new Particle());
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        for (var i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); }
+        for (var i = 0; i < particles.length; i++) {
+            for (var j = i + 1; j < particles.length; j++) {
+                var p1 = particles[i], p2 = particles[j];
+                var dist = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+                if (dist < 120) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.strokeStyle = 'rgba(91, 155, 255, ' + (1 - dist / 120) + ')';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
+</script>
+{% endblock %}

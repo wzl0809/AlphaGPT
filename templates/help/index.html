@@ -1,0 +1,773 @@
+{% extends "base.html" %}
+{% block title %}帮助手册{% endblock %}
+
+{% block extra_head %}
+<link href="{{ url_for('static', filename='css/help.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2><i class="bi bi-question-circle"></i> 帮助手册</h2>
+    <button class="btn btn-outline-custom btn-sm hp-toc-toggle" id="hpTocToggle"><i class="bi bi-list-nested"></i> 目录</button>
+</div>
+
+<div class="hp-layout">
+
+    {# ───────── 左侧目录（sticky）───────── #}
+    <aside class="hp-toc" id="hpToc">
+        <div class="hp-toc-title">导航目录</div>
+        <div class="hp-toc-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="hpSearch" placeholder="搜索功能 / 问题…" autocomplete="off">
+        </div>
+        <a href="#quick" class="active"><i class="bi bi-rocket-takeoff"></i> 快速开始</a>
+        <a href="#auth"><i class="bi bi-shield-lock"></i> 账户与登录</a>
+        <a href="#home"><i class="bi bi-house-door"></i> 首页仪表盘</a>
+        <a href="#settings"><i class="bi bi-gear"></i> 系统设置</a>
+        <a href="#train"><i class="bi bi-cpu"></i> 训练系统</a>
+        <a href="#formula"><i class="bi bi-collection"></i> 公式库</a>
+        <a href="#quant"><i class="bi bi-graph-up-arrow"></i> 量化信号</a>
+        {% if feature_flags.markets_enabled %}
+        <a href="#trade"><i class="bi bi-shop"></i> 策略贴板</a>
+        <a href="#bounty"><i class="bi bi-bullseye"></i> 算力悬赏</a>
+        <a href="#relay"><i class="bi bi-diagram-3"></i> 公式接力</a>
+        {% endif %}
+        <a href="#donate"><i class="bi bi-envelope-paper"></i> 研究分享</a>
+        <a href="#glossary"><i class="bi bi-book"></i> 术语表</a>
+        <a href="#faq"><i class="bi bi-question-circle"></i> 常见问题</a>
+        <a href="#contact"><i class="bi bi-headset"></i> 联系支持</a>
+    </aside>
+
+    {# ───────── 右侧内容 ──────── #}
+    <div class="hp-content">
+
+        {# Hero #}
+        <div class="hp-hero">
+            <h2><i class="bi bi-journal-text"></i> AlphaGPT 使用手册</h2>
+            <p>从零到生成第一个量化信号，只需五步。本手册按栏目分类，覆盖 <b>注册登录、系统设置、训练、公式库、量化信号、策略贴板/悬赏/接力、研究分享</b> 的完整操作流程、参数含义与常见问题。所有公式、信号、AI 评述仅供研究参考，<b>不构成投资建议</b>。</p>
+            <div class="hp-hero-quick">
+                <a class="btn btn-primary-custom btn-sm" href="{{ url_for('auth.register') }}"><i class="bi bi-person-plus"></i> 注册账号</a>
+                <a class="btn btn-outline-custom btn-sm" href="#quick"><i class="bi bi-rocket-takeoff"></i> 五分钟上手</a>
+                <a class="btn btn-outline-custom btn-sm" href="#faq"><i class="bi bi-patch-question"></i> 常见问题</a>
+                <a class="btn btn-outline-custom btn-sm" href="{{ url_for('about.index') }}"><i class="bi bi-info-circle"></i> 关于平台</a>
+            </div>
+        </div>
+
+        {# ═══════════ 快速开始 ═══════════ #}
+        <section class="hp-section" id="quick">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="bi bi-rocket-takeoff"></i></div>
+                <div><h3>五分钟上手</h3><div class="hp-sec-sub">从注册到生成第一个量化信号的完整路径</div></div>
+            </div>
+            <p class="hp-lead">AlphaGPT 的核心循环是：<b>训练 → 公式库 → 量化信号</b>。你可以自己训练公式，也可以直接在策略贴板购买别人的公式，再挂到量化信号栏目生成「次日看多还是观望」的信号。</p>
+
+            <div class="hp-diagram">
+                <svg viewBox="0 0 720 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="使用流程">
+                    <defs>
+                        <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#10b981"/></linearGradient>
+                    </defs>
+                    <!-- 连线 -->
+                    <line x1="80" y1="60" x2="640" y2="60" stroke="#dee2e6" stroke-width="2" stroke-dasharray="5 5"/>
+                    <!-- 节点 -->
+                    <g font-family="-apple-system,sans-serif" font-size="12" fill="#64748b" text-anchor="middle">
+                        <circle cx="80" cy="60" r="22" fill="url(#g1)"/><text x="80" y="64" fill="#fff" font-size="13" font-weight="700">1</text>
+                        <text x="80" y="100" fill="#1e293b" font-weight="600">注册登录</text>
+                        <circle cx="220" cy="60" r="22" fill="url(#g1)"/><text x="220" y="64" fill="#fff" font-size="13" font-weight="700">2</text>
+                        <text x="220" y="100" fill="#1e293b" font-weight="600">配置 API Key</text>
+                        <circle cx="360" cy="60" r="22" fill="url(#g1)"/><text x="360" y="64" fill="#fff" font-size="13" font-weight="700">3</text>
+                        <text x="360" y="100" fill="#1e293b" font-weight="600">训练 / 购买公式</text>
+                        <circle cx="500" cy="60" r="22" fill="url(#g1)"/><text x="500" y="64" fill="#fff" font-size="13" font-weight="700">4</text>
+                        <text x="500" y="100" fill="#1e293b" font-weight="600">加入公式库</text>
+                        <circle cx="640" cy="60" r="22" fill="#f59e0b"/><text x="640" y="64" fill="#fff" font-size="13" font-weight="700">5</text>
+                        <text x="640" y="100" fill="#1e293b" font-weight="600">生成信号</text>
+                    </g>
+                </svg>
+                <div class="hp-diagram-cap">AlphaGPT 核心使用闭环</div>
+            </div>
+
+            <div class="hp-quick">
+                <div class="hp-quick-step"><div class="hp-quick-num">1</div><h5>注册并登录</h5><p>白名单邮箱注册，收验证码完成账号创建</p></div>
+                <div class="hp-quick-step"><div class="hp-quick-num">2</div><h5>配置 Key</h5><p>系统设置里填 DeepSeek / Tavily（可选但推荐）</p></div>
+                <div class="hp-quick-step"><div class="hp-quick-num">3</div><h5>获取公式</h5><p>训练系统自己跑，或策略贴板直接买</p></div>
+                <div class="hp-quick-step"><div class="hp-quick-num">4</div><h5>加入公式库</h5><p>训练完保存，或购买后自动入库</p></div>
+                <div class="hp-quick-step"><div class="hp-quick-num">5</div><h5>生成信号</h5><p>量化信号页一键生成次日买/空信号</p></div>
+            </div>
+
+            <div class="hp-callout tip"><i class="bi bi-lightbulb"></i><div><b>新手建议：</b>先到「系统设置」配置 DeepSeek Key 开启 AI 分析，再到「训练系统」用默认参数对一只熟悉的大盘股（如 601963）跑一次训练，全程挂着等结果即可。训练期间注意散热、不要关闭页面。</div></div>
+        </section>
+
+        {# ═══════════ 账户与登录 ═══════════ #}
+        <section class="hp-section" id="auth">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="bi bi-shield-lock"></i></div>
+                <div><h3>账户与登录</h3><div class="hp-sec-sub">注册 · 登录 · 找回密码 · 版本更新</div></div>
+            </div>
+            <p class="hp-lead">进入所有量化功能前的必经入口。注册、登录、找回密码、客户端版本更新都在这里完成，全部免费开放。新用户注册即赠送算力。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-person-plus"></i></div><div class="hp-feat-body"><div class="hp-feat-name">白名单注册</div><div class="hp-feat-desc">支持 QQ/网易/Gmail/Outlook 等主流邮箱域名，发码前先校验域名</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-key"></i></div><div class="hp-feat-body"><div class="hp-feat-name">找回密码</div><div class="hp-feat-desc">邮箱收重置码（24h 一次、30 分钟有效），改密即吊销全部设备会话</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-cloud-arrow-down"></i></div><div class="hp-feat-body"><div class="hp-feat-name">更新中心</div><div class="hp-feat-desc">版本过旧被服务端拒登时自动跳转，提供多渠道下载，数据不丢失</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-moon-stars"></i></div><div class="hp-feat-body"><div class="hp-feat-name">亮/暗主题</div><div class="hp-feat-desc">登录页右上角一键切换，全站生效并记忆</div></div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-list-ol"></i> 操作流程</div>
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-person-plus"></i> 注册新账号 <span class="hp-flow-tag">首次使用</span></div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">打开客户端，登录页点「<b>没有账号？去注册</b>」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">选择邮箱域名（下拉常用域名），或在最底部选「其他」手输完整邮箱</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">点「<b>发送验证码</b>」：首次直接发送；若提示「正在验证，约 1 秒」是 PoW 防滥用，稍等即可</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">到邮箱查收 6 位验证码（<b>注意翻一下垃圾邮件/广告邮件分类</b>）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">5</div><div class="hp-step-body">输入验证码、用户名（输入时自动查重，绿色 √ 表示可用）、设置密码</div></div>
+                    <div class="hp-step"><div class="hp-step-num">6</div><div class="hp-step-body">点「确认注册」，成功后自动跳回登录页，用邮箱 + 密码登录</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>只支持主流邮箱域名，非白名单域名（选「其他」手输）会被拦截</li>
+                    <li>验证码按钮成功后会灰掉 10 分钟，关闭页面再打开仍在冷却中</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-cloud-arrow-down"></i> 版本过低被拒登后更新 <span class="hp-flow-tag">升级客户端</span></div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">旧版登录被自动跳转到「更新中心」，顶部红框提示需更新到最新版</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">在「下载地址」选一个渠道（带「推荐」标的为官方主推），点「下载」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body"><b>系统托盘 AlphaGPT 图标右键 → 退出</b>，完全关闭旧客户端（直接点 × 可能仍在后台）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">解压新版覆盖旧目录，启动新版，点底部「我已安装新版，重新检测」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">5</div><div class="hp-step-body">检测通过后跳回登录页，用原账号登录</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>找不到托盘图标就用 Ctrl+Shift+Esc 任务管理器结束 AlphaGPT / pythonw 进程</li>
+                    <li>更新不会丢任何数据：账号、算力、自建公式、训练记录全部保留</li>
+                </ul></div>
+            </div>
+
+        </section>
+
+        {# ═══════════ 首页 ═══════════ #}
+        <section class="hp-section" id="home">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="bi bi-house-door"></i></div>
+                <div><h3>首页仪表盘</h3><div class="hp-sec-sub">一屏看全账户状态与 A 股大盘温度</div></div>
+            </div>
+            <p class="hp-lead">登录后的默认落地页。左侧是你的账户信息卡（等级、算力、版本），中间是<b>情绪仪表盘</b>（涨跌家数、涨停跌停、成交额），右侧是 AI 评述与市场新闻。<b>打开瞬间渲染本地缓存秒进</b>，点「刷新大盘数据」才强拉最新行情。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-megaphone"></i></div><div class="hp-feat-body"><div class="hp-feat-name">公告横幅</div><div class="hp-feat-desc">紧急/重要/普通三档，多条每 5 秒自动轮播</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-person-circle"></i></div><div class="hp-feat-body"><div class="hp-feat-name">个人信息卡</div><div class="hp-feat-desc">等级徽章、头衔、算力、版本、用户 ID</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-thermometer-half"></i></div><div class="hp-feat-body"><div class="hp-feat-name">情绪仪表盘</div><div class="hp-feat-desc">0-100 分半圆指针，分红(偏弱)/黄(震荡)/绿(强势)，附打分依据</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-bar-chart"></i></div><div class="hp-feat-body"><div class="hp-feat-name">主要指数表</div><div class="hp-feat-desc">上证/深成/创业板涨跌幅 + 涨停/跌停家数 + 两市成交额</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-robot"></i></div><div class="hp-feat-body"><div class="hp-feat-name">AI 评述</div><div class="hp-feat-desc">配置 DeepSeek Key 后：结论 + 风险 + 利好 + 趋势预测 + 操作建议</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-newspaper"></i></div><div class="hp-feat-body"><div class="hp-feat-name">市场新闻</div><div class="hp-feat-desc">配置 Tavily Key 后：当日中文财经新闻 + 新闻情绪（涨/跌/平）</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-trophy"></i></div><div class="hp-feat-body"><div class="hp-feat-name">板块领涨/领跌</div><div class="hp-feat-desc">行业板块涨跌前 5 名，快速发现当日热点与弱势</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-arrow-repeat"></i></div><div class="hp-feat-body"><div class="hp-feat-name">刷新大盘数据</div><div class="hp-feat-desc">一键强拉行情→评述→新闻（串行），防连点，失败保留旧数据</div></div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-list-ol"></i> 操作流程</div>
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-arrow-repeat"></i> 刷新今日大盘（日常看盘）</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">点击页面上方「<b>刷新大盘数据</b>」按钮</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">等待按钮显示「刷新中…」（行情秒级，AI 评述首次约 10-20 秒，新闻 5-10 秒）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">先看仪表盘指针与温度档（偏弱/震荡/偏暖/强势）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">读下方「<b>打分依据</b>」列表（上涨家数占比、指数涨跌幅、涨停跌停净额、成交额）判断分数合理性</div></div>
+                    <div class="hp-step"><div class="hp-step-num">5</div><div class="hp-step-body">向下看主要指数表与板块领涨/领跌定位当日热点；阅读 AI 评述的结论、风险与操作建议</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>首次打开首页是「零网络」的——只读本地缓存秒进，新鲜度完全靠你点这一下「刷新大盘」</li>
+                    <li>盘中（9:30-11:30 / 13:00-15:00）行情缓存 3 分钟，非交易时段统一 30 分钟，但前台都不会自动刷新</li>
+                    <li>出现橙色「实时行情获取受限」提示时，分数是按剩余维度估算的，请结合实盘核实</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">情绪分数</div><div class="hp-field-desc">0-100 综合分，由上涨家数占比(权重 0.45) + 指数平均涨跌幅(0.35) + 涨跌停结构(0.20) 加权得出。<b>≥70 强势、≥55 偏暖、≥40 震荡、&lt;40 偏弱</b>，只看分档即可</div></div>
+                <div class="hp-field"><div class="hp-field-name">两市成交额</div><div class="hp-field-desc">≥15000 亿为高活跃、≥9000 亿中等活跃、更低为缩量观望。放量上涨配合强势分数更可信</div></div>
+                <div class="hp-field"><div class="hp-field-name">趋势预测</div><div class="hp-field-desc">AI 给出强烈看多/看多/震荡/看空/强烈看空，与情绪分数方向应基本一致，背离时以仪表盘硬指标为准</div></div>
+                <div class="hp-field"><div class="hp-field-name">研究倾向</div><div class="hp-field-desc">倾向参与/继续/观望/降低关注/回避，<b>仅作研究参考不构成投资建议</b>，务必同时阅读风险清单</div></div>
+            </div>
+
+            <div class="hp-callout info"><i class="bi bi-info-circle"></i><div><b>看不到 AI 评述或新闻？</b>这两块依赖你在「系统设置」配置 DeepSeek / Tavily 的 API Key，配置后即可使用，对所有用户免费开放。</div></div>
+        </section>
+
+        {# ═══════════ 系统设置 ═══════════ #}
+        <section class="hp-section" id="settings">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="bi bi-gear"></i></div>
+                <div><h3>系统设置</h3><div class="hp-sec-sub">账号 · 密钥 · 硬件 · 存储</div></div>
+            </div>
+            <p class="hp-lead">平台的控制中心：改密码、配置 AI 与数据源 API Key、查看本机硬件、清理训练产生的报告和断点。配一次全局生效，是让平台跑起来、跑得稳、不占满磁盘的关键页。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-person-vcard"></i></div><div class="hp-feat-body"><div class="hp-feat-name">个人信息维护</div><div class="hp-feat-desc">修改手机/QQ/微信（邮箱与昵称锁定不可改）</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-key"></i></div><div class="hp-feat-body"><div class="hp-feat-name">API Key 加密管理</div><div class="hp-feat-desc">DeepSeek 或任意 OpenAI 兼容端点，掩码预填、不动即留、清空即删</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-shield-lock"></i></div><div class="hp-feat-body"><div class="hp-feat-name">修改密码 + 全设备下线</div><div class="hp-feat-desc">成功后服务端吊销全部会话，本地立即登出强制重登</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-cpu"></i></div><div class="hp-feat-body"><div class="hp-feat-name">硬件识别报告</div><div class="hp-feat-desc">CPU/内存/系统/Python 版本 + 显卡型号与显存（NVIDIA 可识别）</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-sliders"></i></div><div class="hp-feat-body"><div class="hp-feat-name">性能全局调优</div><div class="hp-feat-desc">数据源并发 + 运算核心数，配一次所有训练生效</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-trash3"></i></div><div class="hp-feat-body"><div class="hp-feat-name">存储清理</div><div class="hp-feat-desc">reports（报告/PNG）与 checkpoints（断点）分页批量删除</div></div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-list-ol"></i> 操作流程</div>
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-key"></i> 配置 AI 大模型 Key（开通研究仪表盘）</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">进入「<a href="{{ url_for('settings.index') }}">系统设置</a> → API Key 管理」卡片</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">二选一：填 DeepSeek（sk- 开头），或 OpenAI 兼容端点（接口地址 + 模型名 + Key <b>三件套全填</b>）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">（可选）填 Tavily 用于新闻情绪、Tushare 作为数据源兜底</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">点「保存」，绿色提示显示各家开通状态；去量化页或首页验证 AI 是否生效</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>OpenAI 兼容端点三件套必须全填（如智谱：地址 + glm-4 + Key），漏填模型名该服务商会被跳过</li>
+                    <li>Ollama/vLLM 本地部署时，Key 随便填一个字即可通过校验</li>
+                    <li>输入框预填的是掩码点，不动它就是保留；想删除就把框清空再保存</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">运算核心数</div><div class="hp-field-desc">CPU 线程数 0~64（0=自动）。<b>仅 CPU 训练生效</b>，有 NVIDIA GPU 时默认走 CUDA，此值不生效</div></div>
+                <div class="hp-field"><div class="hp-field-name">加密标注</div><div class="hp-field-desc">「Fernet（cryptography）」= 强加密（推荐）；「XOR+Base64」= 弱保护，建议装 cryptography 库</div></div>
+            </div>
+
+            <div class="hp-callout danger"><i class="bi bi-exclamation-octagon"></i><div><b>换电脑/改计算机名会解密失败：</b>API Key 加密密钥由 FLASK_SECRET + 计算机名派生，机器名一变旧密钥就打不开，需在 API Key 管理里重新输入全部 Key。</div></div>
+
+            <div class="hp-callout warn"><i class="bi bi-exclamation-triangle"></i><div><b>改密会让自己下线：</b>修改密码后服务端吊销该账号全部会话（含当前设备），需用新密码重新登录——这是安全设计，怀疑被盗时改一次密码即可让所有设备下线。</div></div>
+        </section>
+
+        {# ═══════════ 训练系统 ═══════════ #}
+        <section class="hp-section" id="train">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="bi bi-cpu"></i></div>
+                <div><h3>训练系统</h3><div class="hp-sec-sub">AI 自动挖掘量化因子公式（平台核心）</div></div>
+            </div>
+            <p class="hp-lead">让 AI 在历史数据上自动搜索出一个在历史回测中相对基准有超额表现的量化因子公式，并给出样本外夏普、回撤、胜率等历史回测指标，训练完一键存进公式库。<b>公式由 AI 自动生成、无法手写</b>，只能来自训练/购买/接力/悬赏四类来源。</p>
+
+            <div class="hp-diagram">
+                <svg viewBox="0 0 720 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="训练流水线">
+                    <g font-family="-apple-system,sans-serif" font-size="11" fill="#64748b" text-anchor="middle">
+                        <rect x="10" y="30" width="110" height="40" rx="8" fill="rgba(59,130,246,0.12)" stroke="#3b82f6"/>
+                        <text x="65" y="54" fill="#1e293b" font-weight="600">历史 K 线</text>
+                        <text x="135" y="54" fill="#94a3b8">→</text>
+                        <rect x="150" y="30" width="110" height="40" rx="8" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6"/>
+                        <text x="205" y="54" fill="#1e293b" font-weight="600">因子筛选</text>
+                        <text x="275" y="54" fill="#94a3b8">→</text>
+                        <rect x="290" y="30" width="130" height="40" rx="8" fill="rgba(59,130,246,0.12)" stroke="#3b82f6"/>
+                        <text x="355" y="48" fill="#1e293b" font-weight="600">Transformer</text>
+                        <text x="355" y="62" fill="#64748b" font-size="9">生成公式</text>
+                        <text x="435" y="54" fill="#94a3b8">→</text>
+                        <rect x="450" y="30" width="120" height="40" rx="8" fill="rgba(16,185,129,0.12)" stroke="#10b981"/>
+                        <text x="510" y="48" fill="#1e293b" font-weight="600">PPO 优化</text>
+                        <text x="510" y="62" fill="#64748b" font-size="9">夏普最大化</text>
+                        <text x="585" y="54" fill="#94a3b8">→</text>
+                        <rect x="600" y="30" width="110" height="40" rx="8" fill="rgba(245,158,11,0.12)" stroke="#f59e0b"/>
+                        <text x="655" y="54" fill="#1e293b" font-weight="600">OOS 检验</text>
+                    </g>
+                </svg>
+                <div class="hp-diagram-cap">训练流水线：数据 → 因子 → 生成 → 强化优化 → 样本外验证</div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-sliders2"></i></div><div class="hp-feat-body"><div class="hp-feat-name">参数对照表</div><div class="hp-feat-desc">9 大参数组 40+ 参数，每个「?」悬停弹深色浮层说明</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-shuffle"></i></div><div class="hp-feat-body"><div class="hp-feat-name">种子策略 A-F</div><div class="hp-feat-desc">混沌/网格/黄金分割/极致复现/区间扫描/AI 探索</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-play-circle"></i></div><div class="hp-feat-body"><div class="hp-feat-name">训练控制台</div><div class="hp-feat-desc">开始/停止/清空 + 分段变色进度条 + 状态指示灯</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-graph-up"></i></div><div class="hp-feat-body"><div class="hp-feat-name">硬件实时监控</div><div class="hp-feat-desc">每 3 秒刷新 CPU/内存/GPU/显存占用，结束自动停</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-card-text"></i></div><div class="hp-feat-body"><div class="hp-feat-name">实时日志框</div><div class="hp-feat-desc">逐行推送自动滚动，含参数摘要与完成提示</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-stars"></i></div><div class="hp-feat-body"><div class="hp-feat-name">结果分类卡</div><div class="hp-feat-desc">按 test_sharpe 分劣质(红)/普通(灰)/优质(绿)三档，附基准图</div></div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-list-ol"></i> 操作流程</div>
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-play-circle"></i> 训练你的第一个公式 <span class="hp-flow-tag">基础流程</span></div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">进入「<a href="{{ url_for('train.index') }}">训练系统</a>」，硬件监控先拉一次当前占用</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">在「训练数据」组填写「<b>标的代码</b>」（如 601963 或 510050 ETF），<b>必填、默认留空</b></div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">确认起止日期（开始默认 2021-01-01，结束默认当天，建议至少 2~3 年数据）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">按需调整「多轮寻优」轮数（≥20 计有效训练）；种子策略首次用默认 A 混沌探索</div></div>
+                    <div class="hp-step"><div class="hp-step-num">5</div><div class="hp-step-body">点「<b>开始训练</b>」，进度条推进、日志实时刷新、硬件占用每 3 秒更新</div></div>
+                    <div class="hp-step"><div class="hp-step-num">6</div><div class="hp-step-body">完成后看「结果分类卡」的 test_sharpe、年化、回撤、胜率、Calmar 和基准图</div></div>
+                    <div class="hp-step"><div class="hp-step-num">7</div><div class="hp-step-body">「优质」或「普通」时点「保存到公式库」入库；「劣质」按钮自动禁用</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>代码必填且默认留空，否则会提示「请先填写标的代码」不发送请求</li>
+                    <li>训练期间顶部红色警示条提示不要关闭/刷新页面——断网或关页面会中断训练浪费算力</li>
+                    <li>跑常见配置（迭代300、Batch1024、寻优20轮）通常要数小时，机器高负载发热，注意散热</li>
+                    <li>训练中可随时点「停止」中止，系统会自动清理本股票的半成品断点</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-arrow-repeat"></i> 复现与对比实验 <span class="hp-flow-tag">进阶</span></div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">先用 A/E 跑一版公式，记下 test_sharpe 和系统回填的真实种子作为基准</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">把种子策略切到「<b>D 极致复现</b>」，右侧变成手动种子输入框，填入上次的种子</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">保持代码/日期/迭代/Batch/寻优轮数完全一致，再次开始训练对比指标</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>只有 D 能精确复现；A/B/C/E 每次种子都变，适合探索不同方向</li>
+                    <li>复现实验可排查「公式是真有信号还是运气好」——换种子还能跑出相近收益才算稳健</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-clipboard-data"></i> 训练结果指标（产出）</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">test_sharpe 样本外夏普</div><div class="hp-field-desc">决定公式分类档位：<b>≤0.4 劣质 / 0.4~1.5 普通 / ≥1.5 优质</b>。优先取样本外(OOS)值更贴近实盘；越大越好但须配合回撤看</div></div>
+                <div class="hp-field"><div class="hp-field-name">max_dd 最大回撤</div><div class="hp-field-desc">从净值最高点到后续最低点的最大跌幅。<b>越小越稳</b>，20%以内算稳健，超40%风险偏高。高夏普+低回撤=理想</div></div>
+                <div class="hp-field"><div class="hp-field-name">ann_ret 年化收益</div><div class="hp-field-desc">把回测总收益按252交易日复利折算成一年。正值赚负值亏，基于历史不代表未来</div></div>
+                <div class="hp-field"><div class="hp-field-name">win_rate 胜率</div><div class="hp-field-desc">样本外区间开仓后盈利次数占开仓总次数比。<b>不是每日方向命中率</b>（命中率见信号页）</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-database"></i> 训练数据组（所有用户可调）</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">标的代码</div><div class="hp-field-desc">6位代码。个股如601963；ETF如510050/510300。引擎自动获取该标的历史行情（OHLCV+两融）</div></div>
+                <div class="hp-field"><div class="hp-field-name">开始日期</div><div class="hp-field-desc">训练数据起始日。建议<b>5年以上</b>保证RL样本量；不少于1年即可训练，太短效果可能不稳定</div></div>
+                <div class="hp-field"><div class="hp-field-name">手续费率</div><div class="hp-field-desc">单边综合手续费（默认万分之四）。设高惩罚高频交易倾向低频策略；设0不考虑成本（不真实）。A股综合约万分之3~8</div></div>
+                <div class="hp-field"><div class="hp-field-name">多轮寻优</div><div class="hp-field-desc">auto_optimize_runs。=1单次训练；>1每轮不同种子取最优。≥20计有效训练。50为推荐上限</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-sliders"></i> 训练微调组</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">持仓周期(天)</div><div class="hp-field-desc">固定持仓N天后平仓，未考虑止损止盈。1-2天适合短线；5-10天捕捉中长趋势但回撤大。不建议>10</div></div>
+                <div class="hp-field"><div class="hp-field-name">迭代次数</div><div class="hp-field-desc">train_iterations。≥300计有效训练。更多迭代更充分收敛但耗时线性增长。GPU上300轮约10-30分钟</div></div>
+                <div class="hp-field"><div class="hp-field-name">Batch 大小</div><div class="hp-field-desc">每轮生成公式数量。≥1024计有效训练。更大→梯度更平滑但显存高；显存不足时调小至512或256</div></div>
+                <div class="hp-field"><div class="hp-field-name">公式长度</div><div class="hp-field-desc">max_seq_len，公式token上限。控制表达式树深度。过长（>15）易过拟合；过短（&lt;6）表达力不足。推荐8-14</div></div>
+                <div class="hp-field"><div class="hp-field-name">噪声测试</div><div class="hp-field-desc">对最佳公式加高斯噪声扰动测鲁棒性——加噪后失效说明过拟合（脆弱）。默认20次</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-trophy"></i> 奖励组</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">奖励模式</div><div class="hp-field-desc">sharpe=夏普复合奖励（推荐）；winrate=纯胜率（忽略收益大小，高胜率≠赚钱，不推荐）</div></div>
+                <div class="hp-field"><div class="hp-field-name">奖励偏好</div><div class="hp-field-desc">balanced=均衡(0.4/0.3/0.3)；stable=稳健(夏普优先)净值更平滑回撤小；aggressive=进攻(收益优先)回撤大；custom=自定义三权重</div></div>
+                <div class="hp-field"><div class="hp-field-name">夏普/收益/盈亏比权重</div><div class="hp-field-desc">仅custom模式生效，三者之和应为1.0。夏普权重高→追求稳定盈利；收益权重高→追求绝对回报</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-gear"></i> 训练优化组</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">归一化奖励</div><div class="hp-field-desc">batch内z-score归一化——牛市不因涨盲目奖励、熊市不因跌惩罚。推荐True</div></div>
+                <div class="hp-field"><div class="hp-field-name">复杂度惩罚</div><div class="hp-field-desc">complexity_alpha。惩罚=α×(公式长度/最大长度)。越大→公式越短（简洁=泛化好）；α=0可能冗长过拟合。推荐0.02-0.05</div></div>
+                <div class="hp-field"><div class="hp-field-name">熵系数</div><div class="hp-field-desc">entropy_coef。鼓励策略网络探索防过早收敛到次优公式。越大→探索越强但收敛慢；推荐0.001-0.01</div></div>
+                <div class="hp-field"><div class="hp-field-name">固定持仓</div><div class="hp-field-desc">True=固定持仓期收益（无未来信息泄露，回测真实）；False=自适应退出（可能利用未来信息过拟合）。强烈建议True</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-diagram-3"></i> PPO+GAE 组（强化学习核心）</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">PPO Epochs</div><div class="hp-field-desc">每批数据重复利用次数（默认3）。更多=数据利用充分但过拟合风险增。推荐2-4</div></div>
+                <div class="hp-field"><div class="hp-field-name">PPO 裁剪</div><div class="hp-field-desc">clip_eps，限制策略更新幅度防训练崩溃。0.1=保守小步稳但慢；0.3=激进大步快但不稳。标准0.2通常不改</div></div>
+                <div class="hp-field"><div class="hp-field-name">GAE Gamma</div><div class="hp-field-desc">折扣因子γ（默认0.99）。越接近1越看重长远收益（远期奖励几乎不折减）。推荐0.95-0.995</div></div>
+                <div class="hp-field"><div class="hp-field-name">GAE Lambda</div><div class="hp-field-desc">偏差-方差权衡λ（默认0.95）。越大越信任实际收益（高方差低偏差）；越小越信任价值估计（低方差高偏差）。推荐0.9-0.97</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-funnel"></i> 因子选择组</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">自动选前K个</div><div class="hp-field-desc">auto_select_top_k。IC推荐选IC最高的K个因子参与训练。K越大表达力越强但过拟合风险增；推荐7-14</div></div>
+                <div class="hp-field"><div class="hp-field-name">IC 阈值</div><div class="hp-field-desc">|IC|≥0.03视为有弱信号纳入候选。设高(0.05)只留强信号；设低(0.01)保留更多但含噪声</div></div>
+                <div class="hp-field"><div class="hp-field-name">IC t值阈值</div><div class="hp-field-desc">|t|≥2约95%置信因子IC不为零（非随机波动）。数据越长t值越容易达标(SE≈1/√N)。设低(1.0)保留更多但可能不显著</div></div>
+                <div class="hp-field"><div class="hp-field-name">滚动IC窗口</div><div class="hp-field-desc">用最近N天算IC稳定性(ICIR/t值)。太短(20天)噪声大；太长(250天)反应慢。推荐40-120</div></div>
+                <div class="hp-field"><div class="hp-field-name">去冗余(>0.7)</div><div class="hp-field-desc">自动剔除与其他已选因子相关系数>0.7的冗余因子（如RSI14和WR_DIFF高度相关→只留IC更高的）。防共线性提升泛化。推荐True</div></div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-clock-history"></i> 早停/效率组</div>
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">验证间隔</div><div class="hp-field-desc">每50次迭代在验证集（后40%数据）上回测检查泛化——不只训练集好看。设0=禁用（不推荐，无法检测过拟合）</div></div>
+                <div class="hp-field"><div class="hp-field-name">早停耐心值</div><div class="hp-field-desc">连续N次验证无提升后停止（默认4）。配合验证间隔50，=200次迭代无改善才停。防过拟合+省时间</div></div>
+                <div class="hp-field"><div class="hp-field-name">种子策略</div><div class="hp-field-desc">A=混沌探索每次不同（默认）；D=精确复现某次结果；E=区间扫描不重种子适合系统化扫参；F=AI探索用LLM先验知识</div></div>
+            </div>
+
+            <div class="hp-callout tip"><i class="bi bi-lightbulb"></i><div><b>更详细的参数说明：</b>训练页每个参数旁的 <b>ⓘ</b> 悬停有最完整的实时说明（含合理范围、调参建议、参数间互动）。本页为概览，ⓘ 为精解。</div></div>
+
+            <div class="hp-callout warn"><i class="bi bi-exclamation-triangle"></i><div><b>高级/微调参数默认锁定（仅定制用户开放）：</b>「训练数据」组（代码/日期/手续费/寻优轮数）与种子策略对所有用户开放；奖励函数 / PPO / 因子筛选 / 早停等高级微调参数默认锁定、按默认值训练，仅定制用户开放（同公式库>5机制，由签名凭证判定）。如需开放，可<a href="mailto:wzl0809@gmail.com?subject=AlphaGPT定制-高级调参开放">联系开发者</a>。</div></div>
+
+            <div class="hp-callout warn"><i class="bi bi-exclamation-triangle"></i><div><b>训练中切勿关闭页面：</b>训练跑在本地后台线程，关闭或刷新页面会中断训练、浪费算力，且本标的的断点会残留。请一直挂着等状态变成「训练完成」。</div></div>
+        </section>
+
+        {# ═══════════ 公式库 ═══════════ #}
+        <section class="hp-section" id="formula">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="bi bi-collection"></i></div>
+                <div><h3>公式库</h3><div class="hp-sec-sub">管理所有量化公式的私人仓库</div></div>
+            </div>
+            <p class="hp-lead">自己训练的、策略贴板买的、接力或悬赏得来的公式都汇集在这里。按夏普/回撤/年化筛选排序，查看每条公式的基准图与核心指标，把好公式加入量化跟踪、或把自训公式上架换取算力。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-funnel"></i></div><div class="hp-feat-body"><div class="hp-feat-name">多维度筛选排序</div><div class="hp-feat-desc">按来源/夏普降序/回撤升序/日期/年化，每页 20 条</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-list-ul"></i></div><div class="hp-feat-body"><div class="hp-feat-name">列表指标一览</div><div class="hp-feat-desc">代码/来源徽标/夏普着色/回撤/年化/AI 命名</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-image"></i></div><div class="hp-feat-body"><div class="hp-feat-name">详情内页</div><div class="hp-feat-desc">基准图（点击放大）+ 公式表达式 + 核心指标 + 训练配置 + 硬件</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-shop"></i></div><div class="hp-feat-body"><div class="hp-feat-name">上架到策略贴板</div><div class="hp-feat-desc">仅自训公式可上架，公式加密、售前只见元数据</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-graph-up-arrow"></i></div><div class="hp-feat-body"><div class="hp-feat-name">加入量化信号</div><div class="hp-feat-desc">一键写入跟踪列表生成每日信号</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-trash3"></i></div><div class="hp-feat-body"><div class="hp-feat-name">删除（保留基准图）</div><div class="hp-feat-desc">只清记录与关联跟踪，PNG 保留在本地 reports</div></div></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-search"></i> 挑一个好公式加入量化跟踪</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">进入「<a href="{{ url_for('formula_lib.index') }}">公式库</a>」，筛选条输入代码或选来源，排序用「夏普降序」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">点行右侧眼睛图标进入详情，看基准图（点击放大）与核心指标卡</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">确认满意后点底部「<b>加入量化信号</b>」，确认后即跳转量化栏目</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>夏普着色一眼判优劣：红色(≤0.4)/灰色(0.4-1.5)/绿色(≥1.5)</li>
+                    <li>基准图是样本外净值曲线，平稳向上优于暴起暴落</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">Calmar</div><div class="hp-field-desc">年化收益 ÷ 最大回撤，比单看夏普更严苛的优劣标尺。≥1 合格、≥2 优秀、≥3 顶尖</div></div>
+                <div class="hp-field"><div class="hp-field-name">基准图</div><div class="hp-field-desc">样本外净值曲线，反映训练数据之外的实战回测表现。<b>只存本地 reports 不上传服务器</b></div></div>
+            </div>
+
+        </section>
+
+        {# ═══════════ 量化信号 ═══════════ #}
+        <section class="hp-section" id="quant">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="bi bi-graph-up-arrow"></i></div>
+                <div><h3>量化信号</h3><div class="hp-sec-sub">每日方向信号 + AI 决策共振</div></div>
+            </div>
+            <p class="hp-lead">把你训练的公式挂上跟踪，每天收盘后一键生成「下一交易日看多还是观望」的量化信号，并叠加 AI 研究仪表盘共振判断。<b>只给信号、不替你下单</b>，是策略的「信号驾驶舱」。</p>
+
+            <div class="hp-diagram">
+                <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="双弧信号圆圈">
+                    <!-- 背景圆 -->
+                    <circle cx="110" cy="70" r="50" fill="none" stroke="#e2e8f0" stroke-width="14"/>
+                    <!-- 左弧（蓝）公式强度 -->
+                    <path d="M 110 20 A 50 50 0 0 0 60 70" fill="none" stroke="#3b82f6" stroke-width="14" stroke-linecap="round"/>
+                    <!-- 右弧（紫）AI 评分 -->
+                    <path d="M 160 70 A 50 50 0 0 0 110 20" fill="none" stroke="#8b5cf6" stroke-width="14" stroke-linecap="round"/>
+                    <!-- 中心文字 -->
+                    <text x="110" y="66" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="700" fill="#64748b">0.23</text>
+                    <text x="110" y="82" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="8" fill="#64748b">次日</text>
+                    <!-- 图例 -->
+                    <circle cx="40" cy="118" r="5" fill="#3b82f6"/><text x="50" y="122" font-family="-apple-system,sans-serif" font-size="9" fill="#64748b">公式强度</text>
+                    <circle cx="125" cy="118" r="5" fill="#8b5cf6"/><text x="135" y="122" font-family="-apple-system,sans-serif" font-size="9" fill="#64748b">AI 评分</text>
+                </svg>
+                <div class="hp-diagram-cap">双弧信号圆圈：左弧公式强度 + 右弧 AI 评分，两弧同时高填且方向一致即「共振」</div>
+            </div>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-circle-half"></i></div><div class="hp-feat-body"><div class="hp-feat-name">双弧信号圆圈</div><div class="hp-feat-desc">左弧公式强度、右弧 AI 评分，中心可切换：因子末值+分析方向(▲看多/▬观望)，或 仅因子末值 + 目标日</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-check2-all"></i></div><div class="hp-feat-body"><div class="hp-feat-name">公式·AI 共振标</div><div class="hp-feat-desc">同向绿色共振最可信，反向黄色分歧要谨慎</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-clock-history"></i></div><div class="hp-feat-body"><div class="hp-feat-name">数据新鲜度徽标</div><div class="hp-feat-desc">绿勾当日收盘可信；黄⚠️陈旧建议 17:30 后重试</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-bullseye"></i></div><div class="hp-feat-body"><div class="hp-feat-name">近 20 日命中率</div><div class="hp-feat-desc">每日看多/观望预测对照次日实际涨跌的真·准确度</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-clipboard2-data"></i></div><div class="hp-feat-body"><div class="hp-feat-name">样本外核心指标</div><div class="hp-feat-desc">夏普/年化/最大回撤/胜率，每个「?」悬停看解释</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-robot"></i></div><div class="hp-feat-body"><div class="hp-feat-name">AI 研究仪表盘</div><div class="hp-feat-desc">大模型综合均线/量能/资金/筹码打分 + 行动清单</div></div></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-play-circle"></i> 加入跟踪并生成第一个信号</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">进入「公式库」找到想跟踪的公式，点图标按钮或详情页「加入量化信号」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">切到「<a href="{{ url_for('quant.index') }}">量化信号</a>」，新跟踪卡片已出现（信号区为「待测」）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">点卡片左下「<b>生成信号</b>」，等待数秒（取数 + 计算 + 画图 + AI 分析）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">圆圈中央 因子末值分析方向 ，基准图与 AI 仪表盘同步刷新</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>首次进入卡片空、无基准图属正常，点一次「生成信号」即生成</li>
+                    <li>收盘后到数据更新前（约 17:00 前）生成的信号会标⚠️陈旧，建议 17:30 后再生成</li>
+                    <li>训练正在进行时无法生成信号（共用引擎），请等训练结束</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">公式强度（左弧）</div><div class="hp-field-desc">tanh(因子末值) 绝对值×100，是<b>态度坚决度而非概率或准确率</b>。95% 不代表「95% 会涨」</div></div>
+                <div class="hp-field"><div class="hp-field-name">AI 评分（右弧）</div><div class="hp-field-desc">大模型综合打分 0-100。≥60 偏看多、≤40 偏看空、40-60 中性，含 LLM 主观成分</div></div>
+                <div class="hp-field"><div class="hp-field-name">近 20 日命中率</div><div class="hp-field-desc">每日看多/观望倾向对照次日实际涨跌的命中比例（历史样本）。是<b>历史方向命中率</b>，和「胜率」不同，不代表未来预测能力</div></div>
+                <div class="hp-field"><div class="hp-field-name">胜率</div><div class="hp-field-desc">回测里看多信号后盈利次数占比（策略交易胜率），<b>不是每日方向命中率</b>，两者别混用</div></div>
+            </div>
+
+            <div class="hp-callout warn"><i class="bi bi-exclamation-triangle"></i><div><b>公式强度 ≠ 准确率：</b>左弧「公式 xx%」越高只代表态度越坚决，不是涨的概率也不是准确率。要看历史方向命中率，请看「🎯 近 20 日命中率」。两弧都很高且共振一致，比单一信号更值得参考。</div></div>
+            <div class="hp-callout info"><i class="bi bi-info-circle"></i><div><b>QMT 仅演示：</b>弹窗里填账号密码只是保存配置占位，不会连接券商、不会触发真实交易。信号仅多头方向（不做空），圆圈中心可显方向文字或纯因子末值（按功能开关），也不会自动发出交易指令。</div></div>
+        </section>
+
+        {% if feature_flags.markets_enabled %}
+        {# ═══════════ 策略贴板 ═══════════ #}
+        <section class="hp-section" id="trade">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="bi bi-shop"></i></div>
+                <div><h3>策略贴板</h3><div class="hp-sec-sub">公式分享贴板</div></div>
+            </div>
+            <p class="hp-lead">花算力买别人训练好的因子公式直接入库做量化，也能把自己训练的公式定价上架赚取算力。所有指标售前透明，<b>公式明文购买后才解锁</b>，分账比例清晰可查。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-table"></i></div><div class="hp-feat-body"><div class="hp-feat-name">在售公式列表</div><div class="hp-feat-desc">代码/卖家/夏普/回撤/年化/价格，每页 20 条</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-funnel"></i></div><div class="hp-feat-body"><div class="hp-feat-name">多维筛选</div><div class="hp-feat-desc">夏普下限 / 回撤上限阈值 + 多种排序</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-bag-check"></i></div><div class="hp-feat-body"><div class="hp-feat-name">一键购买入库</div><div class="hp-feat-desc">扣除算力后明文写入公式库，来源标记「交易购买」</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-tag"></i></div><div class="hp-feat-body"><div class="hp-feat-name">上架出售</div><div class="hp-feat-desc">仅自训公式可挂单，售价整数 ≥1 算力</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-receipt"></i></div><div class="hp-feat-body"><div class="hp-feat-name">我的分享 / 分享成功</div><div class="hp-feat-desc">管理在售/已售/已下架，透明展示分账</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-receipt"></i></div><div class="hp-feat-body"><div class="hp-feat-name">透明分账</div><div class="hp-feat-desc">售出算力按 50/50 平台/作者拆分，流水可查</div></div></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-bag"></i> 买家：筛选并购买公式</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">进入「<a href="{{ url_for('trade_hall.index') }}">策略贴板</a>」，输入代码或设夏普≥/回撤≤阈值缩小范围</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">排序选「夏普降序」优先看高质量；点眼睛进详情看指标与训练配置</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">点「<b>立即购买</b>」二次确认（提示购买后不可退）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">扣除算力成功后公式明文写入公式库，跳转详情可立即加入量化</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>回撤越大风险越高，稳健型可把回撤上限卡在 0.2（即 20%）以内</li>
+                    <li>公式明文售前隐藏是正常的，指标和训练配置售前完全可见且真实可信</li>
+                    <li>购买会占用公式库容量，若已满 5 个需先删旧公式再买</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-callout info"><i class="bi bi-info-circle"></i><div><b>分账规则：</b>售出算力按 <b>平台 50% / 作者 50%</b> 拆分，流水可查；公式库容量上限 5 个（买入的也算在内）。需要更大容量可<a href="mailto:wzl0809@gmail.com?subject=AlphaGPT定制扩展">联系开发者定制</a>。</div></div>
+
+            <div class="hp-callout danger"><i class="bi bi-exclamation-octagon"></i><div><b>购买不可退：</b>点击「立即购买」会弹二次确认，明确提示「购买后不可退」。买来/接力/悬赏得的公式不可再上架转卖（self-only 政策）。</div></div>
+        </section>
+
+        {# ═══════════ 算力悬赏 ═══════════ #}
+        <section class="hp-section" id="bounty">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#ef4444,#dc2626)"><i class="bi bi-bullseye"></i></div>
+                <div><h3>算力悬赏</h3><div class="hp-sec-sub">把「想要某股的好策略」变成悬赏任务</div></div>
+            </div>
+            <p class="hp-lead">你出算力，其他用户用自训公式来接单竞标，你挑夏普最高的中标拿走公式；反过来有强公式的用户也能靠接单赚取算力。<b>发单即扣押赏金</b>（escrow 托管），中标发给中标者，撤销全额退还。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-megaphone"></i></div><div class="hp-feat-body"><div class="hp-feat-name">发布悬赏（扣押赏金）</div><div class="hp-feat-desc">填标的/达标夏普/赏金/可选算力门槛与截止</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-hammer"></i></div><div class="hp-feat-body"><div class="hp-feat-name">接单投标</div><div class="hp-feat-desc">从本地公式库选自训/购买公式投标，带夏普参与排行</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-list-ol"></i></div><div class="hp-feat-body"><div class="hp-feat-name">接单排行</div><div class="hp-feat-desc">按夏普降序展示，悬赏者任选一行中标（不必选最高）</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-trophy"></i></div><div class="hp-feat-body"><div class="hp-feat-name">中标发赏 + 公式回传</div><div class="hp-feat-desc">赏金即发，公式明文解密写入悬赏者公式库</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-x-circle"></i></div><div class="hp-feat-body"><div class="hp-feat-name">我的悬赏管理</div><div class="hp-feat-desc">征集中可一键撤销退款，顶部显示已托管总额</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-shield-check"></i></div><div class="hp-feat-body"><div class="hp-feat-name">算力门槛硬校验</div><div class="hp-feat-desc">GPU 显存/CPU 核数下限由服务端校验，不达标无法提交</div></div></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-megaphone"></i> 发布悬赏（作为悬赏者）</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">确认算力余额足够支付赏金（不足会被服务端拒绝）</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">点「发布悬赏」，搜索选中标的代码，填达标夏普门槛与赏金金额</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">可选填算力门槛/截止时间，点「确认发布（扣押赏金）」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">在「<a href="{{ url_for('bounty.my') }}">我的悬赏</a>」查看接单排行，满意的那行点「中标」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">5</div><div class="hp-step-body">中标后公式自动写入本地公式库（来源=悬赏获得），可用于量化</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>赏金在发布瞬间扣押冻结，不是有人接单才扣</li>
+                    <li>夏普门槛参考：≥1.5 较强、0.4-1.5 一般；过高可能无人达标</li>
+                    <li>征集中悬赏可点行尾 × 一键撤销并退款</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-callout warn"><i class="bi bi-exclamation-triangle"></i><div><b>接单公式来源限制：</b>只能选「自己训练 / 交易购买」两类本地公式；「悬赏获得 / 接力获得」的公式禁止再投悬赏，防链式倒卖。每个悬赏每人只能投一次、不能接自己发的单。</div></div>
+        </section>
+
+        {# ═══════════ 公式接力 ═══════════ #}
+        <section class="hp-section" id="relay">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="bi bi-diagram-3"></i></div>
+                <div><h3>公式接力</h3><div class="hp-sec-sub">多人凑算力共同训练，取最优共享</div></div>
+            </div>
+            <p class="hp-lead">让多个用户凑算力为同一标的共同训练公式，截止后取夏普最高的一条作为「最优公式」共享给达标者。发起人用算力悬赏，参与者贡献算力换奖励和优质策略。<b>发起即预扣托管金，汇总后多退少补</b>。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 核心功能</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-flag"></i></div><div class="hp-feat-body"><div class="hp-feat-name">发起接力（预扣托管金）</div><div class="hp-feat-desc">标的/达标夏普/单人奖励/上限人数/截止时间</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-people"></i></div><div class="hp-feat-body"><div class="hp-feat-name">报名 + 提交本机公式</div><div class="hp-feat-desc">先报名，再从公式库挑自训/购买公式提交</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-clipboard-check"></i></div><div class="hp-feat-body"><div class="hp-feat-name">汇总发奖 + 余额退还</div><div class="hp-feat-desc">到点自动汇总或手动「立即汇总」，按达标人数结算</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-gift"></i></div><div class="hp-feat-body"><div class="hp-feat-name">领取最优公式</div><div class="hp-feat-desc">达标者领取最高夏普公式，写入公式库（来源=接力获得）</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-shield-check"></i></div><div class="hp-feat-body"><div class="hp-feat-name">算力门槛硬校验</div><div class="hp-feat-desc">GPU 显存/CPU 核数下限由服务端校验</div></div></div>
+            </div>
+
+            <div class="hp-flow">
+                <div class="hp-flow-title"><i class="bi bi-flag"></i> 参与一次接力（作为贡献算力方）</div>
+                <div class="hp-steps">
+                    <div class="hp-step"><div class="hp-step-num">1</div><div class="hp-step-body">在「<a href="{{ url_for('relay.index') }}">公式接力</a>」列表找一支感兴趣的接力，点眼睛进详情</div></div>
+                    <div class="hp-step"><div class="hp-step-num">2</div><div class="hp-step-body">看达标夏普/单人奖励/截止时间/算力门槛，确认自己的公式和机器够格</div></div>
+                    <div class="hp-step"><div class="hp-step-num">3</div><div class="hp-step-body">点「报名」，从本机公式库挑一条夏普尽量高的自训/购买公式「提交结果」</div></div>
+                    <div class="hp-step"><div class="hp-step-num">4</div><div class="hp-step-body">等状态变为「已汇总」，若达标点「<b>领取最优公式</b>」存入公式库</div></div>
+                </div>
+                <div class="hp-flow-tips"><div class="hp-tips-head"><i class="bi bi-lightbulb"></i> 小贴士</div><ul>
+                    <li>下拉框按 test_sharpe 从高到低排序，优先选夏普最高的提交，达标概率更大</li>
+                    <li>即使本条未达标也建议提交：汇总取最高，低分也可能成为本次最优</li>
+                    <li>领取前确认公式库没满（免费上限 5 个），否则需先删旧公式</li>
+                </ul></div>
+            </div>
+
+            <div class="hp-fields">
+                <div class="hp-field"><div class="hp-field-name">达标夏普 min_sharpe</div><div class="hp-field-desc">提交公式 test_sharpe ≥ 此值才算达标。设太高可能无人达标（托管金全额退还），常见设 1.5~2.0</div></div>
+                <div class="hp-field"><div class="hp-field-name">托管金 escrow</div><div class="hp-field-desc">发起时预扣 = 单人奖励 × 上限人数。汇总后按实际达标人数发奖，剩余退还（<b>多退少补</b>）</div></div>
+                <div class="hp-field"><div class="hp-field-name">best_sharpe</div><div class="hp-field-desc">汇总后所有提交公式里最优（最高）的夏普值，达标者领取的就是这条最优公式</div></div>
+            </div>
+
+            <div class="hp-callout info"><i class="bi bi-info-circle"></i><div><b>未达标也能提交：</b>提交本地 test_sharpe 低于门槛时仍可上传，系统提示「未达标，仍可等待」。汇总取所有提交里的最高夏普，所以低分公式也有机会成为本次最优。</div></div>
+        </section>
+
+        {% endif %}
+        {# ═══════════ 研究分享 ═══════════ #}
+        <section class="hp-section" id="donate">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="bi bi-envelope-paper"></i></div>
+                <div><h3>研究分享</h3><div class="hp-sec-sub">免费平台 · 研究分享与功能协助</div></div>
+            </div>
+            <p class="hp-lead">AlphaGPT 是<b>免费共享平台</b>，全部研究能力对所有用户免费开放。如需功能扩展、研究协作或部署协助，可通过邮件联系开发者。</p>
+
+            <div class="hp-h4"><i class="bi bi-grid"></i> 可协助的研究与扩展方向</div>
+            <div class="hp-features">
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-tools"></i></div><div class="hp-feat-body"><div class="hp-feat-name">功能扩展与二次研究</div><div class="hp-feat-desc">按需求扩展平台功能、研究参数与接口</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-graph-up"></i></div><div class="hp-feat-body"><div class="hp-feat-name">因子与策略研究协作</div><div class="hp-feat-desc">自定义因子、算子、训练流程与策略</div></div></div>
+                <div class="hp-feat"><div class="hp-feat-ico"><i class="bi bi-server"></i></div><div class="hp-feat-body"><div class="hp-feat-name">部署协助与维护</div><div class="hp-feat-desc">私有化部署、数据源对接、版本维护与优化</div></div></div>
+            </div>
+
+            <div class="hp-callout tip"><i class="bi bi-envelope-fill"></i><div><b>联系开发者：</b>功能扩展 / 研究协作 / 部署协助请发邮件至 <a href="mailto:wzl0809@gmail.com?subject=AlphaGPT 研究分享与功能协助" style="font-weight:700;color:var(--accent-blue);">wzl0809@gmail.com</a>。协作为独立软件开发工程关系，<b>不构成证券投资咨询、不提供买卖建议、不分成</b>。</div></div>
+
+        </section>
+
+        {# ═══════════ 术语表 ═══════════ #}
+        <section class="hp-section" id="glossary">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="bi bi-book"></i></div>
+                <div><h3>术语表</h3><div class="hp-sec-sub">看懂这些指标，就懂了大半量化</div></div>
+            </div>
+            <div class="hp-glossary">
+                <div class="hp-term"><div class="hp-term-name">夏普比率 test_sharpe</div><div class="hp-term-desc">收益的稳定性。年化超额收益 ÷ 年化波动。<b>≤0.4 劣质 / 0.4-1.5 普通 / ≥1.5 优质 / ≥2 优秀</b>。优先取样本外(OOS)值</div></div>
+                <div class="hp-term"><div class="hp-term-name">最大回撤 max_dd</div><div class="hp-term-desc">从净值最高点到后续最低点的最大跌幅。越小越稳，20% 以内算稳健</div></div>
+                <div class="hp-term"><div class="hp-term-name">年化收益 ann_ret</div><div class="hp-term-desc">按 252 交易日复利折算到一年的收益率。正赚负亏</div></div>
+                <div class="hp-term"><div class="hp-term-name">胜率 win_rate</div><div class="hp-term-desc">看多信号后盈利次数占看多信号总数之比（策略交易胜率，<b>不是方向命中率</b>）</div></div>
+                <div class="hp-term"><div class="hp-term-name">Calmar</div><div class="hp-term-desc">年化收益 ÷ 最大回撤。≥1 合格、≥2 优秀、≥3 顶尖，比夏普更严苛</div></div>
+                <div class="hp-term"><div class="hp-term-name">命中率</div><div class="hp-term-desc">近 20 日每日看多/观望倾向对照次日实际涨跌的命中比例，是<b>历史方向命中率</b>（不代表未来预测能力）</div></div>
+                <div class="hp-term"><div class="hp-term-name">OOS 样本外</div><div class="hp-term-desc">Out-of-Sample，数据后 20%，训练时未见过，用于诚实评估防过拟合</div></div>
+                <div class="hp-term"><div class="hp-term-name">IC / t 值</div><div class="hp-term-desc">Spearman Rank IC 因子相关性；|IC|≥0.03 弱信号，|t|≥2 约 95% 置著</div></div>
+                <div class="hp-term"><div class="hp-term-name">算力</div><div class="hp-term-desc">平台内部研究额度的虚拟点数，注册赠送</div></div>
+                <div class="hp-term"><div class="hp-term-name">因子 Factor</div><div class="hp-term-desc">候选特征，内置 19 个（动量/量价/趋势波动/超买超卖/资金流 5 类）</div></div>
+                <div class="hp-term"><div class="hp-term-name">算子 Operator</div><div class="hp-term-desc">公式构造操作符 12 个（ADD/SUB/GATE/DECAY/JUMP 等）</div></div>
+                <div class="hp-term"><div class="hp-term-name">有效训练</div><div class="hp-term-desc">迭代≥300 且 Batch≥1024 且寻优≥20，用于等级计算</div></div>
+                <div class="hp-term"><div class="hp-term-name">分账</div><div class="hp-term-desc">交易售出的算力拆分：平台 50% / 作者 50%</div></div>
+                <div class="hp-term"><div class="hp-term-name">托管金 escrow</div><div class="hp-term-desc">接力/悬赏发起时预扣冻结的算力，结算时多退少补</div></div>
+            </div>
+        </section>
+
+        {# ═══════════ 常见问题 ═══════════ #}
+        <section class="hp-section" id="faq">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="bi bi-question-circle"></i></div>
+                <div><h3>常见问题</h3><div class="hp-sec-sub">点击问题展开答案</div></div>
+            </div>
+
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">训练一次要花多长时间？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">取决于迭代次数、Batch、寻优轮数和数据量。常见配置（迭代300、Batch1024、寻优20轮）通常要数小时；调高寻优/迭代可能拉长到十几小时甚至更久。期间页面顶部会一直显示警示条和硬件占用，请做好散热并保持网络稳定。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">训练中能关闭或刷新页面吗？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">不能。训练跑在本地后台线程里，关闭或刷新页面会中断训练、浪费已消耗的算力，且本股票的断点会残留。请一直挂着等到状态变成「训练完成」。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">为什么我的公式被判为「劣质」、不能保存？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">说明本次 test_sharpe 落在 0.4 以下。可换一只流动性更好的标的、拉长训练数据区间、或调高迭代/Batch 到有效训练门槛再试。多次仍劣质属正常现象——量化训练本就是概率性搜索。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">收不到验证码怎么办？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">①邮箱域名必须在白名单（QQ/163/126/Gmail/Outlook 等）；②去邮箱的垃圾邮件/广告邮件分类里翻一下；③10 分钟冷却内不会重发；④同一 IP 30 分钟内最多发 3 次；⑤第二次发码需等约 1 秒 PoW 验证，属正常。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">登录按钮变成倒计时了怎么办？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">连续输错密码触发了防暴破退避：前 2 次免锁，之后递增到 10s/30s/120s/最长 900s。等倒计时结束按钮自动恢复，期间可先走「忘记密码」直接重置。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">为什么首页大盘数据看着是几小时前的旧数据？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">首页打开时只读本地缓存（保证秒开、不卡），不会自动联网。请手动点页面上方的「刷新大盘数据」按钮强拉最新行情、AI 评述和新闻。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">API Key 重启后变空了或提示解密失败怎么办？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">Key 用本机 FLASK_SECRET + 计算机名派生密钥加密。换电脑、改计算机名、或 FLASK_SECRET 变了都会让旧密钥对不上。在「API Key 管理」里重新填一遍保存即可。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">买的（或接力/悬赏得的）公式能再挂到贴板转卖吗？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">不能。平台执行 self-only 政策：只有自己训练的公式能上架。交易购买/接力/悬赏获得的公式仅供自用，详情页会直接隐藏出售入口，防止公式被反复倒卖。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">平台有会员/充值/付费功能吗？需要定制怎么办？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">没有。AlphaGPT 是免费共享平台，客户端内不提供任何支付、充值、捐助或会员订阅渠道，所有研究能力对所有用户免费开放。如需功能扩展、研究协作或部署协助，请发邮件联系开发者：wzl0809@gmail.com。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">信号圆圈里「公式 xx%」越高就越准、越该买吗？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">不是。左弧「公式强度」是 tanh 因子末值的绝对值，代表公式态度有多坚决，不是涨的概率也不是准确率。要看历史方向命中率，请看「🎯 近 20 日命中率」。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">公式库满了（达到免费上限）怎么办？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">两种办法：一是进入公式库删除一些不再需要的旧公式（删除只清记录、保留基准图文件，后续还能在系统设置清理）；二是如需更大容量，可联系开发者定制扩展（wzl0809@gmail.com）。</div></div></div>
+            <div class="hp-faq-item"><button class="hp-faq-q" type="button">checkpoints 清理里堆了一堆文件，正常吗？能删吗？<i class="bi bi-chevron-down"></i></button><div class="hp-faq-a"><div class="hp-faq-a-inner">断点文件是训练中途的存档，正常训练完成会自动清理。列表里有残留通常意味着上次训练被中断、失败、或你手动关掉了客户端。确认不需要续训就可以全选删除，不影响后续新训练。</div></div></div>
+        </section>
+
+        {# ═══════════ 联系支持 ═══════════ #}
+        <section class="hp-section" id="contact">
+            <div class="hp-section-head">
+                <div class="hp-sec-ico" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="bi bi-headset"></i></div>
+                <div><h3>联系支持</h3><div class="hp-sec-sub">遇到本手册未覆盖的问题</div></div>
+            </div>
+            <p class="hp-lead">如果本手册没有解答你的问题，或遇到 Bug、账号异常等情况，请通过以下邮箱联系开发者。</p>
+            <div class="hp-member" style="grid-template-columns:1fr;">
+                <div class="hp-member-card free" style="text-align:center;"><div class="hp-member-head" style="justify-content:center;"><i class="bi bi-envelope-fill"></i> 邮箱（研究协作/功能扩展）</div><div style="font-size:1rem;font-weight:700;color:var(--accent-blue);"><a href="mailto:wzl0809@gmail.com?subject=AlphaGPT 研究分享与功能协助" style="color:inherit;">wzl0809@gmail.com</a></div></div>
+            </div>
+            <div class="hp-callout tip"><i class="bi bi-lightbulb"></i><div><b>反馈建议：</b>描述问题时请附上标的代码、操作步骤、出现的提示文案与（如有）截图，能显著加快定位速度。感谢你的使用与反馈！</div></div>
+        </section>
+
+        <div class="hp-no-result" id="hpNoResult"><i class="bi bi-search" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>没有找到匹配的内容，换个关键词试试？</div>
+
+    </div>
+</div>
+
+{# 返回顶部 #}
+<div class="hp-totop" id="hpToTop" title="返回顶部" role="button"><i class="bi bi-arrow-up"></i></div>
+
+<script>
+(function () {
+    /* ── FAQ 折叠 ── */
+    document.querySelectorAll('.hp-faq-q').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var item = btn.closest('.hp-faq-item');
+            var wasOpen = item.classList.contains('open');
+            item.classList.toggle('open');
+            if (!wasOpen) {
+                var a = item.querySelector('.hp-faq-a');
+                var inner = a.querySelector('.hp-faq-a-inner');
+                a.style.maxHeight = (inner.offsetHeight + 32) + 'px';
+            }
+        });
+    });
+
+    /* ── 移动端 TOC 抽屉 ── */
+    var toggle = document.getElementById('hpTocToggle');
+    var toc = document.getElementById('hpToc');
+    if (toggle && toc) {
+        toggle.addEventListener('click', function () { toc.classList.toggle('show'); });
+        toc.querySelectorAll('a').forEach(function (a) {
+            a.addEventListener('click', function () { toc.classList.remove('show'); });
+        });
+    }
+
+    /* ── 滚动监听：高亮当前 TOC ── */
+    var links = Array.prototype.slice.call(document.querySelectorAll('.hp-toc a[href^="#"]'));
+    var sections = links.map(function (l) { return document.getElementById(l.getAttribute('href').slice(1)); }).filter(Boolean);
+    function onScroll() {
+        var pos = window.scrollY + 120;
+        var cur = sections[0];
+        for (var i = 0; i < sections.length; i++) {
+            if (sections[i].offsetTop <= pos) cur = sections[i];
+        }
+        links.forEach(function (l) {
+            l.classList.toggle('active', cur && l.getAttribute('href') === '#' + cur.id);
+        });
+        var totop = document.getElementById('hpToTop');
+        if (totop) totop.classList.toggle('show', window.scrollY > 400);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    /* ── 返回顶部 ── */
+    var totop = document.getElementById('hpToTop');
+    if (totop) totop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+    /* ── 平滑滚动（兼容）── */
+    links.forEach(function (l) {
+        l.addEventListener('click', function (e) {
+            var id = l.getAttribute('href').slice(1);
+            var el = document.getElementById(id);
+            if (el) { e.preventDefault(); window.scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' }); }
+        });
+    });
+
+    /* ── 搜索过滤 ── */
+    var search = document.getElementById('hpSearch');
+    var noResult = document.getElementById('hpNoResult');
+    var content = document.querySelector('.hp-content');
+    var allSections = Array.prototype.slice.call(content.querySelectorAll('.hp-section'));
+    if (search) {
+        search.addEventListener('input', function () {
+            var q = search.value.trim().toLowerCase();
+            var hit = 0;
+            allSections.forEach(function (sec) {
+                var text = sec.textContent.toLowerCase();
+                var match = !q || text.indexOf(q) !== -1;
+                sec.classList.toggle('hp-search-hide', !match);
+                if (match) hit++;
+            });
+            if (noResult) noResult.classList.toggle('show', hit === 0);
+            /* 搜索时 TOC 也按命中过滤 */
+            links.forEach(function (l) {
+                var id = l.getAttribute('href').slice(1);
+                var sec = document.getElementById(id);
+                var match = !q || (sec && sec.textContent.toLowerCase().indexOf(q) !== -1);
+                l.style.display = match ? '' : 'none';
+            });
+        });
+    }
+})();
+</script>
+{% endblock %}
