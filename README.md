@@ -1,6 +1,6 @@
 # AlphaGPT · AI 量化因子研究平台
 
-> 基于 Transformer 策略网络 + PPO 强化学习的 A 股量化因子挖掘与回测研究工具。
+> 基于 Transformer 策略网络 + PPO 强化学习的 股票量化因子挖掘与回测研究工具。
 
 
 ---
