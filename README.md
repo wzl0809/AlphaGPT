@@ -33,8 +33,8 @@ AlphaGPT 是一个量化研究平台。核心引擎用强化学习（Transformer
 
 | 包 | 体积 | 适用 |
 |---|---|---|
-| `AlphaGPT-Client-x.x.x-win64-cpu.zip` | ~200 MB | 所有 Windows，CPU 版 torch |
-| `AlphaGPT-Client-x.x.x-win64-cuda.zip` | ~2 GB | 有 NVIDIA 显卡的 Windows，CUDA 版 torch，训练更快 |
+| `AlphaGPT-Client-x.x.x-win64-cpu.zip` | ~600 MB | 所有 Windows，CPU 版 torch |
+| `AlphaGPT-Client-x.x.x-win64-cuda.zip` | ~3.2 GB | 有 NVIDIA 显卡的 Windows，CUDA 版 torch，训练更快 |
 
 解压后双击 **`run.bat`**（带控制台）或 **`start.vbs`**（无窗口后台）即可启动。
 
